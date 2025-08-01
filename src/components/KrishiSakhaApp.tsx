@@ -8,6 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sprout, Leaf, Sun, History as HistoryIcon, HelpCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getTranslation } from "@/utils/translations";
 
 interface HistoryItem {
   id: string;
@@ -112,11 +113,11 @@ export const KrishiSakhaApp = () => {
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Sprout className="h-8 w-8 text-primary" />
                 <h1 className="text-2xl font-bold gradient-earth bg-clip-text text-transparent">
-                  Krishi Sakha
+                  {getTranslation(language, 'appName')}
                 </h1>
               </div>
               <p className="text-muted-foreground">
-                Your intelligent farming companion
+                {getTranslation(language, 'tagline')}
               </p>
             </div>
 

@@ -3,12 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VoiceInput } from "./VoiceInput";
 import { Send, Sparkles } from "lucide-react";
-
-const demoQueries = [
-  { en: "How to increase wheat yield?", hi: "गेहूं की उपज कैसे बढ़ाएं?", mr: "गहू पिकाची उत्पादकता कशी वाढवावी?", ta: "கோதுமை விளைச்சல் எவ்வாறு அதிகரிப்பது?" },
-  { en: "Best time to plant rice?", hi: "चावल लगाने का सबसे अच्छा समय?", mr: "तांदुळ लावण्याची सर्वोत्तम वेळ?", ta: "அரிசி நடவு செய்ய சிறந்த நேரம்?" },
-  { en: "How to control pest attacks?", hi: "कीट के हमले को कैसे रोकें?", mr: "कीड हल्ल्यावर कसे नियंत्रण ठेवावे?", ta: "பூச்சி தாக்குதல்களை எவ்வாறு கட்டுப்படுத்துவது?" },
-];
+import { getTranslation } from "@/utils/translations";
 
 interface QueryInputProps {
   onSubmit: (query: string) => void;
@@ -22,14 +17,15 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
 
   useEffect(() => {
     const interval = setInterval(() => {
+      const demoQueries = getTranslation(language, 'demoQueries') as string[];
       setCurrentDemo((prev) => (prev + 1) % demoQueries.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [language]);
 
   const getCurrentPlaceholder = () => {
-    const demo = demoQueries[currentDemo];
-    return demo[language as keyof typeof demo] || demo.en;
+    const demoQueries = getTranslation(language, 'demoQueries') as string[];
+    return demoQueries[currentDemo] || "Ask your farming question...";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -73,7 +69,7 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
         </div>
       </form>
       <p className="text-sm text-muted-foreground text-center px-4">
-        Ask in any Indian language or mix languages naturally
+        {getTranslation(language, 'askInAnyLanguage')}
       </p>
     </div>
   );
