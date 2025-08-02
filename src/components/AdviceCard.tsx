@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Volume2, ChevronDown, ChevronUp, Languages } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getStringTranslation } from "@/utils/translations";
 
 interface AdviceCardProps {
   advice: string;
@@ -35,8 +36,8 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
       utterance.onerror = () => {
         setIsPlaying(false);
         toast({
-          title: "Speech not available",
-          description: "Text-to-speech is not supported in your browser",
+          title: getStringTranslation(language, 'speechNotAvailable'),
+          description: getStringTranslation(language, 'speechNotAvailableDesc'),
           variant: "destructive",
         });
       };
@@ -44,8 +45,8 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
       window.speechSynthesis.speak(utterance);
     } else {
       toast({
-        title: "Speech not supported",
-        description: "Your browser doesn't support text-to-speech",
+        title: getStringTranslation(language, 'speechNotSupported'),
+        description: getStringTranslation(language, 'speechNotSupportedDesc'),
         variant: "destructive",
       });
     }
@@ -66,7 +67,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
   };
 
   return (
-    <Card className="shadow-soft transition-smooth hover:shadow-glow">
+    <Card className="shadow-soft transition-smooth hover:shadow-glow harvest-border fertile-glow">
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Main advice */}
@@ -80,7 +81,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
                 size="sm"
                 onClick={() => speakText(advice)}
                 className="touch-target"
-                aria-label={isPlaying ? "Stop reading" : "Read advice aloud"}
+                aria-label={isPlaying ? getStringTranslation(language, 'stopReading') : getStringTranslation(language, 'readAloud')}
               >
                 <Volume2 className={`h-4 w-4 ${isPlaying ? 'animate-pulse' : ''}`} />
               </Button>
@@ -89,7 +90,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
                 size="sm"
                 onClick={() => onTranslate(language)}
                 className="touch-target"
-                aria-label="Translate advice"
+                aria-label={getStringTranslation(language, 'translateAdvice')}
               >
                 <Languages className="h-4 w-4" />
               </Button>
@@ -99,7 +100,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
           {/* Source badge */}
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
-              Source: {source}
+              {getStringTranslation(language, 'source')}: {source}
             </Badge>
           </div>
 
@@ -111,7 +112,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
               className="w-full justify-between p-0 h-auto text-left"
             >
               <span className="text-sm font-medium">
-                {isExpanded ? "Hide explanation" : "Show detailed explanation"}
+                {isExpanded ? getStringTranslation(language, 'hideExplanation') : getStringTranslation(language, 'showExplanation')}
               </span>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />

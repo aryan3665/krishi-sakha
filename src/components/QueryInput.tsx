@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VoiceInput } from "./VoiceInput";
 import { Send, Sparkles } from "lucide-react";
-import { getTranslation } from "@/utils/translations";
+import { getTranslation, getStringTranslation, translations } from "@/utils/translations";
 
 interface QueryInputProps {
   onSubmit: (query: string) => void;
@@ -17,15 +17,21 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const demoQueries = getTranslation(language, 'demoQueries') as string[];
-      setCurrentDemo((prev) => (prev + 1) % demoQueries.length);
+      // Get all demo queries from all languages
+      const allDemoQueries = Object.keys(translations).flatMap(lang => 
+        getTranslation(lang, 'demoQueries') as string[]
+      );
+      setCurrentDemo((prev) => (prev + 1) % allDemoQueries.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, [language]);
+  }, []);
 
   const getCurrentPlaceholder = () => {
-    const demoQueries = getTranslation(language, 'demoQueries') as string[];
-    return demoQueries[currentDemo] || "Ask your farming question...";
+    // Get all demo queries from all languages
+    const allDemoQueries = Object.keys(translations).flatMap(lang => 
+      getTranslation(lang, 'demoQueries') as string[]
+    );
+    return allDemoQueries[currentDemo] || "Ask your farming question...";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,19 +55,19 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={getCurrentPlaceholder()}
-              className="pr-12 h-12 rounded-full border-2 transition-smooth focus:shadow-soft text-base"
+              className="pr-12 h-14 rounded-full border-2 transition-smooth focus:shadow-glow focus:border-primary/50 text-base bg-card/50 backdrop-blur"
               disabled={isLoading}
             />
             <Button
               type="submit"
               size="sm"
               disabled={!query.trim() || isLoading}
-              className="absolute right-1 top-1 rounded-full h-10 w-10 p-0 gradient-earth"
+              className="absolute right-1 top-1 rounded-full h-12 w-12 p-0 gradient-earth shadow-glow hover:scale-105 transition-smooth"
             >
               {isLoading ? (
-                <Sparkles className="h-4 w-4 animate-spin" />
+                <Sparkles className="h-5 w-5 animate-spin" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               )}
             </Button>
           </div>
@@ -69,7 +75,7 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
         </div>
       </form>
       <p className="text-sm text-muted-foreground text-center px-4">
-        {getTranslation(language, 'askInAnyLanguage')}
+        {getStringTranslation(language, 'askInAnyLanguage')}
       </p>
     </div>
   );

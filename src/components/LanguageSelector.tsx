@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe } from "lucide-react";
+import { Globe, ChevronDown } from "lucide-react";
 
 const languages = [
   { code: "en", name: "English", native: "English" },
@@ -33,6 +33,7 @@ export const LanguageSelector = ({ selectedLanguage, onLanguageChange }: Languag
         <Button variant="outline" size="sm" className="gap-2 touch-target">
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">{currentLanguage.native}</span>
+          <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

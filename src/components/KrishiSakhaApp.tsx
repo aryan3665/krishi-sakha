@@ -8,7 +8,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sprout, Leaf, Sun, History as HistoryIcon, HelpCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getTranslation } from "@/utils/translations";
+import { getTranslation, getStringTranslation } from "@/utils/translations";
 
 interface HistoryItem {
   id: string;
@@ -57,8 +57,8 @@ export const KrishiSakhaApp = () => {
     setIsLoading(false);
     
     toast({
-      title: "Advice generated",
-      description: "Your farming question has been answered",
+      title: getStringTranslation(language, 'adviceGenerated'),
+      description: getStringTranslation(language, 'adviceGeneratedDesc'),
     });
   };
 
@@ -98,8 +98,8 @@ export const KrishiSakhaApp = () => {
 
   const handleTranslate = (targetLang: string) => {
     toast({
-      title: "Translation feature",
-      description: "Translation will be implemented with API integration",
+      title: getStringTranslation(language, 'translationFeature'),
+      description: getStringTranslation(language, 'translationDesc'),
     });
   };
 
@@ -109,15 +109,18 @@ export const KrishiSakhaApp = () => {
         return (
           <div className="space-y-6">
             {/* Welcome section */}
-            <div className="text-center space-y-2 py-6">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <Sprout className="h-8 w-8 text-primary" />
-                <h1 className="text-2xl font-bold gradient-earth bg-clip-text text-transparent">
-                  {getTranslation(language, 'appName')}
+            <div className="text-center space-y-2 py-6 harvest-border p-6 mb-4 fertile-glow">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <div className="relative">
+                  <Sprout className="h-10 w-10 text-primary animate-pulse" />
+                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full animate-ping"></div>
+                </div>
+                <h1 className="text-3xl font-bold gradient-earth bg-clip-text text-transparent">
+                  {getStringTranslation(language, 'appName')}
                 </h1>
               </div>
-              <p className="text-muted-foreground">
-                {getTranslation(language, 'tagline')}
+              <p className="text-muted-foreground text-lg">
+                {getStringTranslation(language, 'tagline')}
               </p>
             </div>
 
@@ -145,7 +148,7 @@ export const KrishiSakhaApp = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold mb-3 flex items-center gap-2">
                     <Leaf className="h-4 w-4 text-secondary" />
-                    Recent Activity
+                    {getStringTranslation(language, 'recentActivity')}
                   </h3>
                   <div className="space-y-2">
                     {history.slice(0, 3).map((item) => (
@@ -166,9 +169,9 @@ export const KrishiSakhaApp = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <HistoryIcon className="h-5 w-5" />
-              Query History
+              {getStringTranslation(language, 'queryHistory')}
             </h2>
-            <QueryHistory history={history} onSelectQuery={generateAdvice} />
+            <QueryHistory history={history} onSelectQuery={generateAdvice} language={language} />
           </div>
         );
 
@@ -177,26 +180,24 @@ export const KrishiSakhaApp = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />
-              Help & Tips
+              {getStringTranslation(language, 'helpTitle')}
             </h2>
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-2">How to use Krishi Sakha</h3>
+                  <h3 className="font-semibold mb-2">{getStringTranslation(language, 'howToUse')}</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>• Ask farming questions in any Indian language</li>
-                    <li>• Use voice input by clicking the microphone</li>
-                    <li>• Listen to advice using the speaker button</li>
-                    <li>• View detailed explanations and sources</li>
-                    <li>• Access your question history anytime</li>
+                    {(getTranslation(language, 'helpItems') as string[]).map((item, index) => (
+                      <li key={index}>• {item}</li>
+                    ))}
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-2">Example Questions</h3>
+                  <h3 className="font-semibold mb-2">{getStringTranslation(language, 'exampleQuestions')}</h3>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>• "मेरी फसल में कीड़े लग गए हैं, क्या करूं?"</li>
-                    <li>• "Best fertilizer for tomato plants?"</li>
-                    <li>• "धान की खेती कब करनी चाहिए?"</li>
+                    {(getTranslation(language, 'exampleItems') as string[]).map((item, index) => (
+                      <li key={index}>• {item}</li>
+                    ))}
                   </ul>
                 </div>
               </CardContent>
@@ -209,14 +210,14 @@ export const KrishiSakhaApp = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Settings
+              {getStringTranslation(language, 'settingsTitle')}
             </h2>
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold">Language</h3>
-                    <p className="text-sm text-muted-foreground">Choose your preferred language</p>
+                    <h3 className="font-semibold">{getStringTranslation(language, 'language')}</h3>
+                    <p className="text-sm text-muted-foreground">{getStringTranslation(language, 'languageDesc')}</p>
                   </div>
                   <LanguageSelector
                     selectedLanguage={language}
@@ -225,8 +226,8 @@ export const KrishiSakhaApp = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold">Theme</h3>
-                    <p className="text-sm text-muted-foreground">Switch between light and dark mode</p>
+                    <h3 className="font-semibold">{getStringTranslation(language, 'theme')}</h3>
+                    <p className="text-sm text-muted-foreground">{getStringTranslation(language, 'themeDesc')}</p>
                   </div>
                   <ThemeToggle />
                 </div>
@@ -243,11 +244,14 @@ export const KrishiSakhaApp = () => {
   return (
     <div className="min-h-screen bg-gradient-field">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border/50 crop-pattern">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto">
           <div className="flex items-center gap-2">
-            <Sun className="h-6 w-6 text-accent" />
-            <span className="font-semibold">Krishi Sakha</span>
+            <div className="relative">
+              <Sun className="h-6 w-6 text-accent animate-pulse" />
+              <div className="absolute inset-0 h-6 w-6 text-accent opacity-50 animate-ping"></div>
+            </div>
+            <span className="font-semibold gradient-earth bg-clip-text text-transparent">Krishi Sakha</span>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSelector
@@ -270,6 +274,7 @@ export const KrishiSakhaApp = () => {
       <BottomNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        language={language}
       />
     </div>
   );

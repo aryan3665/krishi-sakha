@@ -680,3 +680,8 @@ export const getTranslation = (language: string, key: string): string | string[]
   // Fallback to English
   return translations.en[key as keyof typeof translations.en] || key;
 };
+
+export const getStringTranslation = (language: string, key: string): string => {
+  const result = getTranslation(language, key);
+  return Array.isArray(result) ? result[0] || key : result;
+};

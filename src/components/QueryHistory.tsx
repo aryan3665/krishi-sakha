@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, Clock, Filter } from "lucide-react";
+import { getStringTranslation } from "@/utils/translations";
 
 interface HistoryItem {
   id: string;
@@ -17,6 +18,7 @@ interface HistoryItem {
 interface QueryHistoryProps {
   history: HistoryItem[];
   onSelectQuery: (query: string) => void;
+  language: string;
 }
 
 const languageNames: Record<string, string> = {
@@ -30,7 +32,7 @@ const languageNames: Record<string, string> = {
   'pa': '🇮🇳 ਪੰ',
 };
 
-export const QueryHistory = ({ history, onSelectQuery }: QueryHistoryProps) => {
+export const QueryHistory = ({ history, onSelectQuery, language }: QueryHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [languageFilter, setLanguageFilter] = useState<string | null>(null);
 
@@ -59,7 +61,7 @@ export const QueryHistory = ({ history, onSelectQuery }: QueryHistoryProps) => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search your farming questions..."
+            placeholder={getStringTranslation(language, 'searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 rounded-full"
@@ -75,7 +77,7 @@ export const QueryHistory = ({ history, onSelectQuery }: QueryHistoryProps) => {
               className="whitespace-nowrap"
             >
               <Filter className="h-3 w-3 mr-1" />
-              All
+              {getStringTranslation(language, 'all')}
             </Button>
             {uniqueLanguages.map((lang) => (
               <Button
@@ -99,7 +101,10 @@ export const QueryHistory = ({ history, onSelectQuery }: QueryHistoryProps) => {
             <CardContent className="p-6 text-center">
               <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-muted-foreground">
-                {searchTerm || languageFilter ? "No matching queries found" : "No farming questions asked yet"}
+                {searchTerm || languageFilter 
+                  ? getStringTranslation(language, 'noQueriesFound') 
+                  : getStringTranslation(language, 'noQueriesYet')
+                }
               </p>
             </CardContent>
           </Card>

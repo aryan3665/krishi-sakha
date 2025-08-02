@@ -149,4 +149,19 @@ All colors MUST be HSL.
     min-height: 48px;
     min-width: 48px;
   }
+
+  /* Agriculture-themed enhancements */
+  .crop-pattern {
+    background-image: radial-gradient(circle at 2px 2px, hsl(var(--primary) / 0.1) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+  
+  .fertile-glow {
+    box-shadow: 0 0 20px hsl(var(--accent) / 0.4);
+  }
+  
+  .harvest-border {
+    border: 2px solid hsl(var(--accent) / 0.3);
+    border-radius: 16px;
+  }
 }
