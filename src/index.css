@@ -8,32 +8,32 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Agriculture-inspired color palette */
-    --background: 35 20% 98%;
-    --foreground: 25 15% 15%;
+    /* Agriculture-inspired color palette - Earthy greens and browns */
+    --background: 120 15% 97%;
+    --foreground: 30 25% 15%;
 
-    --card: 35 25% 96%;
-    --card-foreground: 25 15% 15%;
+    --card: 120 20% 95%;
+    --card-foreground: 30 25% 15%;
 
-    --popover: 35 25% 96%;
-    --popover-foreground: 25 15% 15%;
+    --popover: 120 20% 95%;
+    --popover-foreground: 30 25% 15%;
 
-    /* Warm terracotta primary */
-    --primary: 15 65% 55%;
-    --primary-foreground: 35 20% 98%;
-    --primary-glow: 15 75% 65%;
+    /* Rich crop green primary */
+    --primary: 100 45% 35%;
+    --primary-foreground: 120 15% 97%;
+    --primary-glow: 100 55% 45%;
 
-    /* Fresh sage green secondary */
-    --secondary: 85 25% 45%;
-    --secondary-foreground: 35 20% 98%;
+    /* Fertile soil brown secondary */
+    --secondary: 30 50% 45%;
+    --secondary-foreground: 120 15% 97%;
 
     /* Soft earth tones */
-    --muted: 35 15% 92%;
-    --muted-foreground: 25 10% 45%;
+    --muted: 120 10% 88%;
+    --muted-foreground: 30 15% 45%;
 
-    /* Golden accent */
-    --accent: 45 85% 60%;
-    --accent-foreground: 25 15% 15%;
+    /* Golden harvest accent */
+    --accent: 45 75% 55%;
+    --accent-foreground: 30 25% 15%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 35 20% 98%;
@@ -63,31 +63,31 @@ All colors MUST be HSL.
 
   .dark {
     /* Dark agriculture theme - night farming */
-    --background: 25 15% 8%;
-    --foreground: 35 25% 92%;
+    --background: 120 15% 8%;
+    --foreground: 120 20% 92%;
 
-    --card: 25 20% 12%;
-    --card-foreground: 35 25% 92%;
+    --card: 120 20% 12%;
+    --card-foreground: 120 20% 92%;
 
-    --popover: 25 20% 12%;
-    --popover-foreground: 35 25% 92%;
+    --popover: 120 20% 12%;
+    --popover-foreground: 120 20% 92%;
 
-    /* Warm terracotta remains primary in dark */
-    --primary: 15 75% 65%;
-    --primary-foreground: 25 15% 8%;
-    --primary-glow: 15 85% 75%;
+    /* Bright crop green in dark */
+    --primary: 100 55% 45%;
+    --primary-foreground: 120 15% 8%;
+    --primary-glow: 100 65% 55%;
 
-    /* Darker sage green */
-    --secondary: 85 35% 35%;
-    --secondary-foreground: 35 25% 92%;
+    /* Darker earth brown */
+    --secondary: 30 40% 25%;
+    --secondary-foreground: 120 20% 92%;
 
     /* Dark earth tones */
-    --muted: 25 10% 18%;
-    --muted-foreground: 35 15% 65%;
+    --muted: 120 10% 18%;
+    --muted-foreground: 120 15% 65%;
 
     /* Brighter golden accent for dark mode */
-    --accent: 45 90% 70%;
-    --accent-foreground: 25 15% 8%;
+    --accent: 45 85% 65%;
+    --accent-foreground: 120 15% 8%;
 
     --destructive: 0 80% 65%;
     --destructive-foreground: 25 15% 8%;
@@ -113,6 +113,23 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background-image: url('/src/assets/farm-background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: hsl(var(--background) / 0.85);
+    backdrop-filter: blur(1px);
+    z-index: -1;
   }
 }
 
@@ -135,13 +152,13 @@ All colors MUST be HSL.
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  /* Organic shadows */
+  /* Enhanced organic shadows */
   .shadow-soft {
-    box-shadow: 0 4px 20px hsl(var(--primary) / 0.1);
+    box-shadow: 0 6px 25px hsl(var(--primary) / 0.15);
   }
   
   .shadow-glow {
-    box-shadow: 0 0 30px hsl(var(--primary-glow) / 0.3);
+    box-shadow: 0 0 40px hsl(var(--primary-glow) / 0.4);
   }
 
   /* Touch-friendly sizing */
@@ -157,11 +174,53 @@ All colors MUST be HSL.
   }
   
   .fertile-glow {
-    box-shadow: 0 0 20px hsl(var(--accent) / 0.4);
+    box-shadow: 0 0 25px hsl(var(--accent) / 0.5);
   }
   
   .harvest-border {
-    border: 2px solid hsl(var(--accent) / 0.3);
-    border-radius: 16px;
+    border: 2px solid hsl(var(--accent) / 0.4);
+    border-radius: 20px;
+  }
+
+  /* Animated search border effect */
+  .animated-search-border {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .animated-search-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: conic-gradient(
+      from 0deg,
+      hsl(var(--primary)),
+      hsl(var(--accent)),
+      hsl(var(--primary-glow)),
+      hsl(var(--primary))
+    );
+    border-radius: inherit;
+    animation: rotate-border 3s linear infinite;
+    z-index: -1;
+  }
+  
+  @keyframes rotate-border {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Enhanced glass effect for cards */
+  .glass-card {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
   }
 }

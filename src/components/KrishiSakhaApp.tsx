@@ -109,27 +109,32 @@ export const KrishiSakhaApp = () => {
         return (
           <div className="space-y-6">
             {/* Welcome section */}
-            <div className="text-center space-y-2 py-6 harvest-border p-6 mb-4 fertile-glow">
-              <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="text-center space-y-4 py-8 mb-8">
+              <div className="flex items-center justify-center gap-3 mb-6">
                 <div className="relative">
-                  <Sprout className="h-10 w-10 text-primary animate-pulse" />
-                  <div className="absolute -top-1 -right-1 h-3 w-3 bg-accent rounded-full animate-ping"></div>
+                  <Sprout className="h-12 w-12 text-primary" />
+                  <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full"></div>
                 </div>
-                <h1 className="text-3xl font-bold gradient-earth bg-clip-text text-transparent">
+                <h1 className="text-4xl font-bold gradient-earth bg-clip-text text-transparent">
                   {getStringTranslation(language, 'appName')}
                 </h1>
               </div>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground text-xl font-medium">
                 {getStringTranslation(language, 'tagline')}
               </p>
             </div>
 
-            {/* Query input */}
-            <QueryInput
-              onSubmit={generateAdvice}
-              language={language}
-              isLoading={isLoading}
-            />
+            {/* Spacer for visual depth */}
+            <div className="h-16"></div>
+
+            {/* Query input - positioned lower */}
+            <div className="glass-card p-6 rounded-2xl mb-8">
+              <QueryInput
+                onSubmit={generateAdvice}
+                language={language}
+                isLoading={isLoading}
+              />
+            </div>
 
             {/* Current advice */}
             {currentAdvice && (
@@ -144,22 +149,20 @@ export const KrishiSakhaApp = () => {
 
             {/* Recent activity */}
             {history.length > 0 && (
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-3 flex items-center gap-2">
-                    <Leaf className="h-4 w-4 text-secondary" />
-                    {getStringTranslation(language, 'recentActivity')}
-                  </h3>
-                  <div className="space-y-2">
-                    {history.slice(0, 3).map((item) => (
-                      <div key={item.id} className="text-sm border-l-2 border-accent/30 pl-3">
-                        <p className="font-medium">{item.query}</p>
-                        <p className="text-muted-foreground text-xs">{item.advice.slice(0, 80)}...</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="glass-card p-6 rounded-2xl shadow-soft">
+                <h3 className="font-semibold mb-4 flex items-center gap-2 text-lg">
+                  <Leaf className="h-5 w-5 text-secondary" />
+                  {getStringTranslation(language, 'recentActivity')}
+                </h3>
+                <div className="space-y-3">
+                  {history.slice(0, 3).map((item) => (
+                    <div key={item.id} className="text-sm border-l-3 border-accent/40 pl-4 py-2">
+                      <p className="font-medium text-foreground">{item.query}</p>
+                      <p className="text-muted-foreground text-xs mt-1">{item.advice.slice(0, 80)}...</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         );

@@ -47,22 +47,22 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex gap-2 items-center">
-          <div className="relative flex-1">
+        <div className="flex gap-3 items-center">
+          <div className="relative flex-1 animated-search-border rounded-full">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={getCurrentPlaceholder()}
-              className="pr-12 h-14 rounded-full border-2 transition-smooth focus:shadow-glow focus:border-primary/50 text-base bg-card/50 backdrop-blur"
+              className="pr-14 h-16 rounded-full border-0 transition-smooth focus:shadow-glow text-lg bg-card/90 backdrop-blur-sm shadow-soft"
               disabled={isLoading}
             />
             <Button
               type="submit"
               size="sm"
               disabled={!query.trim() || isLoading}
-              className="absolute right-1 top-1 rounded-full h-12 w-12 p-0 gradient-earth shadow-glow hover:scale-105 transition-smooth"
+              className="absolute right-2 top-2 rounded-full h-12 w-12 p-0 gradient-earth shadow-glow hover:scale-110 transition-smooth"
             >
               {isLoading ? (
                 <Sparkles className="h-5 w-5 animate-spin" />
@@ -74,7 +74,7 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
           <VoiceInput onTranscript={handleVoiceTranscript} language={language} />
         </div>
       </form>
-      <p className="text-sm text-muted-foreground text-center px-4">
+      <p className="text-sm text-muted-foreground text-center px-4 font-medium">
         {getStringTranslation(language, 'askInAnyLanguage')}
       </p>
     </div>
