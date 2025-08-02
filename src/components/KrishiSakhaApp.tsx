@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Sprout, Leaf, Sun, History as HistoryIcon, HelpCircle, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTranslation, getStringTranslation } from "@/utils/translations";
-
 interface HistoryItem {
   id: string;
   query: string;
@@ -18,7 +17,6 @@ interface HistoryItem {
   timestamp: Date;
   source: string;
 }
-
 export const KrishiSakhaApp = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [language, setLanguage] = useState("en");
@@ -29,20 +27,21 @@ export const KrishiSakhaApp = () => {
     source: string;
   } | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Mock AI advice generation
   const generateAdvice = async (query: string) => {
     setIsLoading(true);
-    
+
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     // Mock responses based on query keywords
     const mockAdvice = getMockAdvice(query);
-    
     setCurrentAdvice(mockAdvice);
-    
+
     // Add to history
     const historyItem: HistoryItem = {
       id: Date.now().toString(),
@@ -50,21 +49,17 @@ export const KrishiSakhaApp = () => {
       advice: mockAdvice.advice,
       language,
       timestamp: new Date(),
-      source: mockAdvice.source,
+      source: mockAdvice.source
     };
-    
     setHistory(prev => [historyItem, ...prev]);
     setIsLoading(false);
-    
     toast({
       title: getStringTranslation(language, 'adviceGenerated'),
-      description: getStringTranslation(language, 'adviceGeneratedDesc'),
+      description: getStringTranslation(language, 'adviceGeneratedDesc')
     });
   };
-
   const getMockAdvice = (query: string) => {
     const queryLower = query.toLowerCase();
-    
     if (queryLower.includes("wheat") || queryLower.includes("गेहूं")) {
       return {
         advice: "Use balanced NPK fertilizer (120:60:40 kg/ha) and ensure proper irrigation during grain filling stage.",
@@ -72,7 +67,6 @@ export const KrishiSakhaApp = () => {
         source: "ICAR Guidelines"
       };
     }
-    
     if (queryLower.includes("rice") || queryLower.includes("चावल")) {
       return {
         advice: "Plant rice during monsoon season (June-July) with 21-day old seedlings at 20cm x 15cm spacing.",
@@ -80,7 +74,6 @@ export const KrishiSakhaApp = () => {
         source: "Department of Agriculture"
       };
     }
-    
     if (queryLower.includes("pest") || queryLower.includes("कीट")) {
       return {
         advice: "Use integrated pest management: neem oil spray (5ml/L) + yellow sticky traps + encourage beneficial insects.",
@@ -88,32 +81,28 @@ export const KrishiSakhaApp = () => {
         source: "ICRISAT Research"
       };
     }
-    
     return {
       advice: "Consider soil testing first, then apply organic matter and follow crop rotation for sustainable farming.",
       explanation: "Soil testing reveals nutrient deficiencies and pH levels, helping optimize fertilizer use. Organic matter improves soil structure, water retention, and microbial activity. Crop rotation breaks pest cycles and naturally replenishes soil nutrients.",
       source: "Agricultural Extension Service"
     };
   };
-
   const handleTranslate = (targetLang: string) => {
     toast({
       title: getStringTranslation(language, 'translationFeature'),
-      description: getStringTranslation(language, 'translationDesc'),
+      description: getStringTranslation(language, 'translationDesc')
     });
   };
-
   const renderContent = () => {
     switch (activeTab) {
       case "home":
-        return (
-          <div className="space-y-6">
+        return <div className="space-y-6">
             {/* Welcome section */}
             <div className="text-center space-y-4 py-8 mb-8">
               <div className="flex items-center justify-center gap-3 mb-6">
                 <div className="relative">
                   <Sprout className="h-12 w-12 text-primary" />
-                  <div className="absolute -top-1 -right-1 h-4 w-4 bg-accent rounded-full"></div>
+                  
                 </div>
                 <h1 className="text-4xl font-bold gradient-earth bg-clip-text text-transparent">
                   {getStringTranslation(language, 'appName')}
@@ -129,58 +118,36 @@ export const KrishiSakhaApp = () => {
 
             {/* Query input - positioned lower */}
             <div className="glass-card p-6 rounded-2xl mb-8">
-              <QueryInput
-                onSubmit={generateAdvice}
-                language={language}
-                isLoading={isLoading}
-              />
+              <QueryInput onSubmit={generateAdvice} language={language} isLoading={isLoading} />
             </div>
 
             {/* Current advice */}
-            {currentAdvice && (
-              <AdviceCard
-                advice={currentAdvice.advice}
-                explanation={currentAdvice.explanation}
-                source={currentAdvice.source}
-                language={language}
-                onTranslate={handleTranslate}
-              />
-            )}
+            {currentAdvice && <AdviceCard advice={currentAdvice.advice} explanation={currentAdvice.explanation} source={currentAdvice.source} language={language} onTranslate={handleTranslate} />}
 
             {/* Recent activity */}
-            {history.length > 0 && (
-              <div className="glass-card p-6 rounded-2xl shadow-soft">
+            {history.length > 0 && <div className="glass-card p-6 rounded-2xl shadow-soft">
                 <h3 className="font-semibold mb-4 flex items-center gap-2 text-lg">
                   <Leaf className="h-5 w-5 text-secondary" />
                   {getStringTranslation(language, 'recentActivity')}
                 </h3>
                 <div className="space-y-3">
-                  {history.slice(0, 3).map((item) => (
-                    <div key={item.id} className="text-sm border-l-3 border-accent/40 pl-4 py-2">
+                  {history.slice(0, 3).map(item => <div key={item.id} className="text-sm border-l-3 border-accent/40 pl-4 py-2">
                       <p className="font-medium text-foreground">{item.query}</p>
                       <p className="text-muted-foreground text-xs mt-1">{item.advice.slice(0, 80)}...</p>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
-              </div>
-            )}
-          </div>
-        );
-
+              </div>}
+          </div>;
       case "history":
-        return (
-          <div className="space-y-4">
+        return <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <HistoryIcon className="h-5 w-5" />
               {getStringTranslation(language, 'queryHistory')}
             </h2>
             <QueryHistory history={history} onSelectQuery={generateAdvice} language={language} />
-          </div>
-        );
-
+          </div>;
       case "help":
-        return (
-          <div className="space-y-4">
+        return <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <HelpCircle className="h-5 w-5" />
               {getStringTranslation(language, 'helpTitle')}
@@ -190,27 +157,20 @@ export const KrishiSakhaApp = () => {
                 <div>
                   <h3 className="font-semibold mb-2">{getStringTranslation(language, 'howToUse')}</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    {(getTranslation(language, 'helpItems') as string[]).map((item, index) => (
-                      <li key={index}>• {item}</li>
-                    ))}
+                    {(getTranslation(language, 'helpItems') as string[]).map((item, index) => <li key={index}>• {item}</li>)}
                   </ul>
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">{getStringTranslation(language, 'exampleQuestions')}</h3>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    {(getTranslation(language, 'exampleItems') as string[]).map((item, index) => (
-                      <li key={index}>• {item}</li>
-                    ))}
+                    {(getTranslation(language, 'exampleItems') as string[]).map((item, index) => <li key={index}>• {item}</li>)}
                   </ul>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        );
-
+          </div>;
       case "settings":
-        return (
-          <div className="space-y-4">
+        return <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Settings className="h-5 w-5" />
               {getStringTranslation(language, 'settingsTitle')}
@@ -222,10 +182,7 @@ export const KrishiSakhaApp = () => {
                     <h3 className="font-semibold">{getStringTranslation(language, 'language')}</h3>
                     <p className="text-sm text-muted-foreground">{getStringTranslation(language, 'languageDesc')}</p>
                   </div>
-                  <LanguageSelector
-                    selectedLanguage={language}
-                    onLanguageChange={setLanguage}
-                  />
+                  <LanguageSelector selectedLanguage={language} onLanguageChange={setLanguage} />
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -236,16 +193,12 @@ export const KrishiSakhaApp = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        );
-
+          </div>;
       default:
         return null;
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-field">
+  return <div className="min-h-screen bg-gradient-field">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border/50 crop-pattern">
         <div className="flex items-center justify-between p-4 max-w-md mx-auto">
@@ -257,10 +210,7 @@ export const KrishiSakhaApp = () => {
             <span className="font-semibold gradient-earth bg-clip-text text-transparent">Krishi Sakha</span>
           </div>
           <div className="flex items-center gap-2">
-            <LanguageSelector
-              selectedLanguage={language}
-              onLanguageChange={setLanguage}
-            />
+            <LanguageSelector selectedLanguage={language} onLanguageChange={setLanguage} />
             <ThemeToggle />
           </div>
         </div>
@@ -274,11 +224,6 @@ export const KrishiSakhaApp = () => {
       </main>
 
       {/* Bottom navigation */}
-      <BottomNavigation
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        language={language}
-      />
-    </div>
-  );
+      <BottomNavigation activeTab={activeTab} onTabChange={setActiveTab} language={language} />
+    </div>;
 };
