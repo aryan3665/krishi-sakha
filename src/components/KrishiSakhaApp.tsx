@@ -6,9 +6,12 @@ import { BottomNavigation } from "./BottomNavigation";
 import { LanguageSelector } from "./LanguageSelector";
 import { ThemeToggle } from "./ThemeToggle";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sprout, Leaf, Sun, History as HistoryIcon, HelpCircle, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sprout, Leaf, Sun, History as HistoryIcon, HelpCircle, Settings, LogOut, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getTranslation, getStringTranslation } from "@/utils/translations";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueries } from "@/hooks/useQueries";
 interface HistoryItem {
   id: string;
   query: string;
@@ -20,72 +23,37 @@ interface HistoryItem {
 export const KrishiSakhaApp = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [language, setLanguage] = useState("en");
-  const [isLoading, setIsLoading] = useState(false);
   const [currentAdvice, setCurrentAdvice] = useState<{
     advice: string;
     explanation: string;
     source: string;
   } | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const {
-    toast
-  } = useToast();
+  const { user, signOut } = useAuth();
+  const { queries, loading, submitQuery, deleteQuery } = useQueries();
+  const { toast } = useToast();
 
-  // Mock AI advice generation
+  // Generate advice and store in database
   const generateAdvice = async (query: string) => {
-    setIsLoading(true);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Mock responses based on query keywords
-    const mockAdvice = getMockAdvice(query);
-    setCurrentAdvice(mockAdvice);
-
-    // Add to history
-    const historyItem: HistoryItem = {
-      id: Date.now().toString(),
-      query,
-      advice: mockAdvice.advice,
-      language,
-      timestamp: new Date(),
-      source: mockAdvice.source
-    };
-    setHistory(prev => [historyItem, ...prev]);
-    setIsLoading(false);
-    toast({
-      title: getStringTranslation(language, 'adviceGenerated'),
-      description: getStringTranslation(language, 'adviceGeneratedDesc')
-    });
+    try {
+      const result = await submitQuery(query, language);
+      if (result) {
+        setCurrentAdvice({
+          advice: result.advice,
+          explanation: result.explanation || "",
+          source: "Krishi Sakha AI"
+        });
+      }
+    } catch (error) {
+      console.error('Error generating advice:', error);
+    }
   };
-  const getMockAdvice = (query: string) => {
-    const queryLower = query.toLowerCase();
-    if (queryLower.includes("wheat") || queryLower.includes("गेहूं")) {
-      return {
-        advice: "Use balanced NPK fertilizer (120:60:40 kg/ha) and ensure proper irrigation during grain filling stage.",
-        explanation: "Wheat requires balanced nutrition for optimal yield. Nitrogen promotes vegetative growth, phosphorus helps root development, and potassium improves grain quality. Apply fertilizer in split doses and maintain soil moisture at 70-80% field capacity during critical growth stages.",
-        source: "ICAR Guidelines"
-      };
-    }
-    if (queryLower.includes("rice") || queryLower.includes("चावल")) {
-      return {
-        advice: "Plant rice during monsoon season (June-July) with 21-day old seedlings at 20cm x 15cm spacing.",
-        explanation: "Rice planting timing is crucial for optimal yield. Monsoon provides natural irrigation, reducing costs. Young seedlings (21 days) have better survival rate and tillering capacity. Proper spacing ensures adequate nutrition and light penetration for healthy growth.",
-        source: "Department of Agriculture"
-      };
-    }
-    if (queryLower.includes("pest") || queryLower.includes("कीट")) {
-      return {
-        advice: "Use integrated pest management: neem oil spray (5ml/L) + yellow sticky traps + encourage beneficial insects.",
-        explanation: "IPM approach reduces pesticide dependence while maintaining crop protection. Neem oil is eco-friendly and targets specific pests without harming beneficial insects. Yellow traps catch flying pests, while beneficial insects like ladybirds control aphids naturally.",
-        source: "ICRISAT Research"
-      };
-    }
-    return {
-      advice: "Consider soil testing first, then apply organic matter and follow crop rotation for sustainable farming.",
-      explanation: "Soil testing reveals nutrient deficiencies and pH levels, helping optimize fertilizer use. Organic matter improves soil structure, water retention, and microbial activity. Crop rotation breaks pest cycles and naturally replenishes soil nutrients.",
-      source: "Agricultural Extension Service"
-    };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
   };
   const handleTranslate = (targetLang: string) => {
     toast({
@@ -116,24 +84,36 @@ export const KrishiSakhaApp = () => {
             {/* Spacer for visual depth */}
             <div className="h-16"></div>
 
+            {/* Welcome message with user name */}
+            {user && (
+              <div className="glass-card p-4 rounded-xl mb-6 text-center">
+                <p className="text-lg font-medium text-green-700">
+                  Welcome, {user.user_metadata?.full_name || user.email}! 
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Ask any farming question below.
+                </p>
+              </div>
+            )}
+
             {/* Query input - positioned lower */}
             <div className="glass-card p-6 rounded-2xl mb-8">
-              <QueryInput onSubmit={generateAdvice} language={language} isLoading={isLoading} />
+              <QueryInput onSubmit={generateAdvice} language={language} isLoading={loading} />
             </div>
 
             {/* Current advice */}
             {currentAdvice && <AdviceCard advice={currentAdvice.advice} explanation={currentAdvice.explanation} source={currentAdvice.source} language={language} onTranslate={handleTranslate} />}
 
             {/* Recent activity */}
-            {history.length > 0 && <div className="glass-card p-6 rounded-2xl shadow-soft">
+            {queries.length > 0 && <div className="glass-card p-6 rounded-2xl shadow-soft">
                 <h3 className="font-semibold mb-4 flex items-center gap-2 text-lg">
                   <Leaf className="h-5 w-5 text-secondary" />
                   {getStringTranslation(language, 'recentActivity')}
                 </h3>
                 <div className="space-y-3">
-                  {history.slice(0, 3).map(item => <div key={item.id} className="text-sm border-l-3 border-accent/40 pl-4 py-2">
-                      <p className="font-medium text-foreground">{item.query}</p>
-                      <p className="text-muted-foreground text-xs mt-1">{item.advice.slice(0, 80)}...</p>
+                  {queries.slice(0, 3).map(query => <div key={query.id} className="text-sm border-l-3 border-accent/40 pl-4 py-2">
+                      <p className="font-medium text-foreground">{query.query_text}</p>
+                      <p className="text-muted-foreground text-xs mt-1">{query.advice.slice(0, 80)}...</p>
                     </div>)}
                 </div>
               </div>}
@@ -144,7 +124,39 @@ export const KrishiSakhaApp = () => {
               <HistoryIcon className="h-5 w-5" />
               {getStringTranslation(language, 'queryHistory')}
             </h2>
-            <QueryHistory history={history} onSelectQuery={generateAdvice} language={language} />
+            <div className="space-y-4">
+              {queries.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No queries yet. Start by asking a question!</p>
+                </div>
+              ) : (
+                queries.map(query => (
+                  <Card key={query.id}>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-medium">{query.query_text}</p>
+                          <p className="text-sm text-muted-foreground">{query.language} • {new Date(query.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="bg-muted/50 p-3 rounded-lg">
+                          <p className="text-sm">{query.advice}</p>
+                        </div>
+                        <div className="flex justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => deleteQuery(query.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </div>;
       case "help":
         return <div className="space-y-4">
@@ -175,6 +187,29 @@ export const KrishiSakhaApp = () => {
               <Settings className="h-5 w-5" />
               {getStringTranslation(language, 'settingsTitle')}
             </h2>
+            
+            {/* User Profile Card */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <User className="h-10 w-10 p-2 bg-green-100 text-green-600 rounded-full" />
+                  <div>
+                    <h3 className="font-semibold">{user?.user_metadata?.full_name || "User"}</h3>
+                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* App Settings Card */}
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
