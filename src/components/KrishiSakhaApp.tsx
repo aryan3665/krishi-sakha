@@ -136,7 +136,15 @@ export const KrishiSakhaApp = () => {
                       <div className="space-y-3">
                         <div>
                           <p className="font-medium">{query.query_text}</p>
-                          <p className="text-sm text-muted-foreground">{query.language} • {new Date(query.created_at).toLocaleDateString()}</p>
+                          {query.original_query_text && query.original_query_text !== query.query_text && (
+                            <p className="text-xs text-muted-foreground italic mt-1">
+                              Original: {query.original_query_text}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground">
+                            {query.language} • {query.detected_language ? `Detected: ${query.detected_language} • ` : ''}
+                            {new Date(query.created_at).toLocaleDateString()}
+                          </p>
                         </div>
                         <div className="bg-muted/50 p-3 rounded-lg">
                           <p className="text-sm">{query.advice}</p>

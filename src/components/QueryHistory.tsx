@@ -13,6 +13,7 @@ interface HistoryItem {
   language: string;
   timestamp: Date;
   source: string;
+  originalQuery?: string; // For showing original vs cleaned query
 }
 
 interface QueryHistoryProps {
@@ -114,7 +115,14 @@ export const QueryHistory = ({ history, onSelectQuery, language }: QueryHistoryP
               <CardContent className="p-4">
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium text-sm leading-relaxed flex-1">{item.query}</p>
+                    <div className="flex-1 space-y-1">
+                      <p className="font-medium text-sm leading-relaxed">{item.query}</p>
+                      {item.originalQuery && item.originalQuery !== item.query && (
+                        <p className="text-xs text-muted-foreground italic">
+                          Original: {item.originalQuery}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <Badge variant="outline" className="text-xs">
                         {languageNames[item.language] || item.language}
