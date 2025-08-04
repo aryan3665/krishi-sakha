@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { preprocessQuery } from '@/utils/queryPreprocessor';
 
 export interface Query {
   id: string;
   user_id: string;
   query_text: string;
+  original_query_text: string | null;
+  detected_language: string | null;
   language: string;
   advice: string;
   explanation: string | null;
@@ -87,13 +90,29 @@ export const useQueries = () => {
     
     setLoading(true);
     try {
-      const { advice, explanation } = generateMockAdvice(queryText);
+      // Preprocess the query
+      const processed = preprocessQuery(queryText);
+      
+      // Validate the processed query
+      if (!processed.isValid) {
+        toast({
+          title: "Invalid Query",
+          description: processed.error || "Please enter a valid farming question.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { advice, explanation } = generateMockAdvice(processed.cleanedText);
       
       const { data, error } = await supabase
         .from('queries')
         .insert([{
           user_id: user.id,
-          query_text: queryText,
+          query_text: processed.cleanedText,
+          original_query_text: processed.originalText,
+          detected_language: processed.detectedLanguage,
           language,
           advice,
           explanation

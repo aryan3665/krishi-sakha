@@ -45,27 +45,33 @@ export type Database = {
         Row: {
           advice: string
           created_at: string
+          detected_language: string | null
           explanation: string | null
           id: string
           language: string
+          original_query_text: string | null
           query_text: string
           user_id: string
         }
         Insert: {
           advice: string
           created_at?: string
+          detected_language?: string | null
           explanation?: string | null
           id?: string
           language?: string
+          original_query_text?: string | null
           query_text: string
           user_id: string
         }
         Update: {
           advice?: string
           created_at?: string
+          detected_language?: string | null
           explanation?: string | null
           id?: string
           language?: string
+          original_query_text?: string | null
           query_text?: string
           user_id?: string
         }
