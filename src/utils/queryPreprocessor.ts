@@ -1,5 +1,4 @@
-import { franc } from 'franc-min';
-import { transliterate as tr } from 'transliterate';
+// Simple query preprocessing without external dependencies
 
 export interface ProcessedQuery {
   originalText: string;
@@ -40,15 +39,20 @@ export const preprocessQuery = (query: string): ProcessedQuery => {
     .replace(/(.)\1{3,}/g, '$1$1') // Reduce repeated characters (more than 3) to 2
     .toLowerCase();
 
-  // Step 2: Language detection
+  // Step 2: Language detection using simple heuristics
   let detectedLanguage = 'eng'; // Default to English
-  try {
-    const detected = franc(cleanedText);
-    if (detected && detected !== 'und') {
-      detectedLanguage = detected;
-    }
-  } catch (error) {
-    console.warn('Language detection failed:', error);
+  
+  // Simple language detection based on script patterns
+  if (/[\u0900-\u097F]/.test(cleanedText)) {
+    detectedLanguage = 'hin'; // Hindi/Devanagari
+  } else if (/[\u0980-\u09FF]/.test(cleanedText)) {
+    detectedLanguage = 'ben'; // Bengali
+  } else if (/[\u0A00-\u0A7F]/.test(cleanedText)) {
+    detectedLanguage = 'guj'; // Gujarati
+  } else if (/[\u0B00-\u0B7F]/.test(cleanedText)) {
+    detectedLanguage = 'ori'; // Odia
+  } else if (containsHinglishPattern(cleanedText)) {
+    detectedLanguage = 'hin-rom'; // Hindi in Roman script
   }
 
   // Step 3: Handle code-mixed or transliteration
