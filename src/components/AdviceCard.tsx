@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Volume2, ChevronDown, ChevronUp, Languages } from "lucide-react";
+import { Volume2, VolumeX, ChevronDown, ChevronUp, Languages, Pause, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getStringTranslation } from "@/utils/translations";
 
@@ -17,39 +17,119 @@ interface AdviceCardProps {
 export const AdviceCard = ({ advice, explanation, source, language, onTranslate }: AdviceCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
   const { toast } = useToast();
 
   const speakText = (text: string) => {
     if ('speechSynthesis' in window) {
-      if (isPlaying) {
+      if (isPlaying && !isPaused) {
+        // Stop current speech
         window.speechSynthesis.cancel();
         setIsPlaying(false);
+        setIsPaused(false);
+        setCurrentUtterance(null);
         return;
       }
 
+      if (isPaused && currentUtterance) {
+        // Resume paused speech
+        window.speechSynthesis.resume();
+        setIsPaused(false);
+        return;
+      }
+
+      // Start new speech
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = getLanguageCode(language);
       utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
       
-      utterance.onstart = () => setIsPlaying(true);
-      utterance.onend = () => setIsPlaying(false);
-      utterance.onerror = () => {
+      utterance.onstart = () => {
+        setIsPlaying(true);
+        setIsPaused(false);
+      };
+      
+      utterance.onend = () => {
         setIsPlaying(false);
-        toast({
-          title: getStringTranslation(language, 'speechNotAvailable'),
-          description: getStringTranslation(language, 'speechNotAvailableDesc'),
-          variant: "destructive",
-        });
+        setIsPaused(false);
+        setCurrentUtterance(null);
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
+        setIsPlaying(false);
+        setIsPaused(false);
+        setCurrentUtterance(null);
+        
+        // Try fallback to English if language not supported
+        if (language !== 'en') {
+          const fallbackUtterance = new SpeechSynthesisUtterance(text);
+          fallbackUtterance.lang = 'en-US';
+          fallbackUtterance.rate = 0.9;
+          
+          fallbackUtterance.onstart = () => setIsPlaying(true);
+          fallbackUtterance.onend = () => {
+            setIsPlaying(false);
+            setCurrentUtterance(null);
+          };
+          
+          fallbackUtterance.onerror = () => {
+            setIsPlaying(false);
+            setCurrentUtterance(null);
+            toast({
+              title: getStringTranslation(language, 'speechNotAvailable') || 'Speech not available',
+              description: getStringTranslation(language, 'speechNotAvailableDesc') || 'Unable to read text aloud.',
+              variant: "destructive",
+            });
+          };
+          
+          window.speechSynthesis.speak(fallbackUtterance);
+          setCurrentUtterance(fallbackUtterance);
+          
+          toast({
+            title: "Language not supported",
+            description: "Reading in English instead.",
+            variant: "default",
+          });
+        } else {
+          toast({
+            title: getStringTranslation(language, 'speechNotAvailable') || 'Speech not available',
+            description: getStringTranslation(language, 'speechNotAvailableDesc') || 'Unable to read text aloud.',
+            variant: "destructive",
+          });
+        }
       };
 
+      setCurrentUtterance(utterance);
       window.speechSynthesis.speak(utterance);
     } else {
       toast({
-        title: getStringTranslation(language, 'speechNotSupported'),
-        description: getStringTranslation(language, 'speechNotSupportedDesc'),
+        title: getStringTranslation(language, 'speechNotSupported') || 'Speech not supported',
+        description: getStringTranslation(language, 'speechNotSupportedDesc') || 'Your browser does not support text-to-speech.',
         variant: "destructive",
       });
     }
+  };
+
+  const pauseResumeSpeech = () => {
+    if (!isPlaying) return;
+    
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+    } else {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
+    }
+  };
+
+  const stopSpeech = () => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    setIsPaused(false);
+    setCurrentUtterance(null);
   };
 
   const getLanguageCode = (lang: string) => {
@@ -76,21 +156,46 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
               <p className="text-lg font-semibold leading-relaxed">{advice}</p>
             </div>
             <div className="flex gap-2">
+              {/* Primary Listen/Stop Button */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => speakText(advice)}
                 className="touch-target"
-                aria-label={isPlaying ? getStringTranslation(language, 'stopReading') : getStringTranslation(language, 'readAloud')}
+                aria-label={isPlaying ? 
+                  (getStringTranslation(language, 'stopReading') || 'Stop reading') : 
+                  (getStringTranslation(language, 'readAloud') || 'Read aloud')}
               >
-                <Volume2 className={`h-4 w-4 ${isPlaying ? 'animate-pulse' : ''}`} />
+                {isPlaying ? (
+                  <VolumeX className="h-4 w-4 animate-pulse" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
               </Button>
+              
+              {/* Pause/Resume Button - only show when playing */}
+              {isPlaying && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={pauseResumeSpeech}
+                  className="touch-target"
+                  aria-label={isPaused ? 'Resume' : 'Pause'}
+                >
+                  {isPaused ? (
+                    <Play className="h-4 w-4" />
+                  ) : (
+                    <Pause className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+              
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onTranslate(language)}
                 className="touch-target"
-                aria-label={getStringTranslation(language, 'translateAdvice')}
+                aria-label={getStringTranslation(language, 'translateAdvice') || 'Translate advice'}
               >
                 <Languages className="h-4 w-4" />
               </Button>
@@ -122,10 +227,21 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
             </Button>
             
             {isExpanded && (
-              <div className="animate-fade-in">
-                <p className="text-sm text-muted-foreground leading-relaxed border-l-4 border-primary/20 pl-4">
-                  {explanation}
-                </p>
+              <div className="animate-fade-in space-y-3">
+                <div className="flex items-start gap-3">
+                  <p className="flex-1 text-sm text-muted-foreground leading-relaxed border-l-4 border-primary/20 pl-4">
+                    {explanation}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => speakText(explanation)}
+                    className="touch-target p-1"
+                    aria-label="Read explanation aloud"
+                  >
+                    <Volume2 className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>

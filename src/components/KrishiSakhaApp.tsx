@@ -252,7 +252,28 @@ export const KrishiSakhaApp = () => {
             </div>
             <span className="font-semibold gradient-earth bg-clip-text text-transparent">Krishi Sakha</span>
           </div>
+          
           <div className="flex items-center gap-2">
+            {/* User Profile Display */}
+            {user && (
+              <div className="flex items-center gap-2 mr-2">
+                <div className="flex items-center gap-1 bg-primary/10 rounded-full px-2 py-1">
+                  <User className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-medium text-primary truncate max-w-16">
+                    {user.user_metadata?.full_name?.split(' ')[0] || 'User'}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="h-8 w-8 p-1 text-muted-foreground hover:text-destructive"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <LanguageSelector selectedLanguage={language} onLanguageChange={setLanguage} />
             <ThemeToggle />
           </div>
