@@ -19,27 +19,45 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentUtterance, setCurrentUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+  const [speechSupported, setSpeechSupported] = useState(true);
   const { toast } = useToast();
 
+  const resetSpeechState = () => {
+    setIsPlaying(false);
+    setIsPaused(false);
+    setCurrentUtterance(null);
+  };
+
   const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      if (isPlaying && !isPaused) {
-        // Stop current speech
-        window.speechSynthesis.cancel();
-        setIsPlaying(false);
-        setIsPaused(false);
-        setCurrentUtterance(null);
-        return;
-      }
+    if (!('speechSynthesis' in window)) {
+      setSpeechSupported(false);
+      toast({
+        title: getStringTranslation(language, 'speechNotSupported') || 'Speech not supported',
+        description: getStringTranslation(language, 'speechNotSupportedDesc') || 'Your browser does not support text-to-speech.',
+        variant: "destructive",
+      });
+      return;
+    }
 
-      if (isPaused && currentUtterance) {
-        // Resume paused speech
-        window.speechSynthesis.resume();
-        setIsPaused(false);
-        return;
-      }
+    // Stop current speech if playing
+    if (isPlaying && !isPaused) {
+      window.speechSynthesis.cancel();
+      resetSpeechState();
+      return;
+    }
 
-      // Start new speech
+    // Resume paused speech
+    if (isPaused && currentUtterance) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+      return;
+    }
+
+    // Cancel any existing speech and wait for it to clear
+    window.speechSynthesis.cancel();
+    
+    // Small delay to ensure speechSynthesis is properly reset
+    setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = getLanguageCode(language);
       utterance.rate = 0.9;
@@ -52,48 +70,41 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
       };
       
       utterance.onend = () => {
-        setIsPlaying(false);
-        setIsPaused(false);
-        setCurrentUtterance(null);
+        resetSpeechState();
       };
       
       utterance.onerror = (event) => {
         console.error('Speech synthesis error:', event.error);
-        setIsPlaying(false);
-        setIsPaused(false);
-        setCurrentUtterance(null);
+        resetSpeechState();
         
         // Try fallback to English if language not supported
-        if (language !== 'en') {
-          const fallbackUtterance = new SpeechSynthesisUtterance(text);
-          fallbackUtterance.lang = 'en-US';
-          fallbackUtterance.rate = 0.9;
-          
-          fallbackUtterance.onstart = () => setIsPlaying(true);
-          fallbackUtterance.onend = () => {
-            setIsPlaying(false);
-            setCurrentUtterance(null);
-          };
-          
-          fallbackUtterance.onerror = () => {
-            setIsPlaying(false);
-            setCurrentUtterance(null);
+        if (language !== 'en' && event.error !== 'interrupted') {
+          setTimeout(() => {
+            const fallbackUtterance = new SpeechSynthesisUtterance(text);
+            fallbackUtterance.lang = 'en-US';
+            fallbackUtterance.rate = 0.9;
+            
+            fallbackUtterance.onstart = () => setIsPlaying(true);
+            fallbackUtterance.onend = () => resetSpeechState();
+            fallbackUtterance.onerror = () => {
+              resetSpeechState();
+              toast({
+                title: getStringTranslation(language, 'speechNotAvailable') || 'Speech not available',
+                description: getStringTranslation(language, 'speechNotAvailableDesc') || 'Unable to read text aloud.',
+                variant: "destructive",
+              });
+            };
+            
+            window.speechSynthesis.speak(fallbackUtterance);
+            setCurrentUtterance(fallbackUtterance);
+            
             toast({
-              title: getStringTranslation(language, 'speechNotAvailable') || 'Speech not available',
-              description: getStringTranslation(language, 'speechNotAvailableDesc') || 'Unable to read text aloud.',
-              variant: "destructive",
+              title: "Language not supported",
+              description: "Reading in English instead.",
+              variant: "default",
             });
-          };
-          
-          window.speechSynthesis.speak(fallbackUtterance);
-          setCurrentUtterance(fallbackUtterance);
-          
-          toast({
-            title: "Language not supported",
-            description: "Reading in English instead.",
-            variant: "default",
-          });
-        } else {
+          }, 100);
+        } else if (event.error !== 'interrupted') {
           toast({
             title: getStringTranslation(language, 'speechNotAvailable') || 'Speech not available',
             description: getStringTranslation(language, 'speechNotAvailableDesc') || 'Unable to read text aloud.',
@@ -104,13 +115,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
 
       setCurrentUtterance(utterance);
       window.speechSynthesis.speak(utterance);
-    } else {
-      toast({
-        title: getStringTranslation(language, 'speechNotSupported') || 'Speech not supported',
-        description: getStringTranslation(language, 'speechNotSupportedDesc') || 'Your browser does not support text-to-speech.',
-        variant: "destructive",
-      });
-    }
+    }, 100);
   };
 
   const pauseResumeSpeech = () => {
@@ -127,9 +132,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
 
   const stopSpeech = () => {
     window.speechSynthesis.cancel();
-    setIsPlaying(false);
-    setIsPaused(false);
-    setCurrentUtterance(null);
+    resetSpeechState();
   };
 
   const getLanguageCode = (lang: string) => {
@@ -158,10 +161,11 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
             <div className="flex gap-2">
               {/* Primary Listen/Stop Button */}
               <Button
-                variant="outline"
+                variant={isPlaying ? "default" : "outline"}
                 size="sm"
                 onClick={() => speakText(advice)}
                 className="touch-target"
+                disabled={!speechSupported}
                 aria-label={isPlaying ? 
                   (getStringTranslation(language, 'stopReading') || 'Stop reading') : 
                   (getStringTranslation(language, 'readAloud') || 'Read aloud')}
@@ -237,6 +241,7 @@ export const AdviceCard = ({ advice, explanation, source, language, onTranslate 
                     size="sm"
                     onClick={() => speakText(explanation)}
                     className="touch-target p-1"
+                    disabled={!speechSupported}
                     aria-label="Read explanation aloud"
                   >
                     <Volume2 className="h-3 w-3" />
