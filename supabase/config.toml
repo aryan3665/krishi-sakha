@@ -1,1 +1,4 @@
 project_id = "vilhreflbavpivsahfgi"
+
+[functions.generate-advice]
+verify_jwt = true

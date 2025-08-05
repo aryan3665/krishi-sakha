@@ -22,41 +22,37 @@ export const useQueries = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const generateMockAdvice = (query: string): { advice: string; explanation: string } => {
-    const queryLower = query.toLowerCase();
-    
-    if (queryLower.includes('पानी') || queryLower.includes('water') || queryLower.includes('irrigation')) {
+  const generateAdviceWithAI = async (cleanedText: string, detectedLanguage: string | null, language: string): Promise<{ advice: string; explanation: string }> => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-advice', {
+        body: {
+          cleaned_query_text: cleanedText,
+          detected_language: detectedLanguage,
+          language: language
+        }
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to generate advice');
+      }
+
+      if (!data || !data.advice) {
+        throw new Error('Invalid response from AI service');
+      }
+
       return {
-        advice: "Ensure proper water management by checking soil moisture regularly. Water early morning or evening to minimize evaporation.",
-        explanation: "Proper irrigation timing helps plants absorb water efficiently while reducing water loss through evaporation."
+        advice: data.advice,
+        explanation: data.explanation || 'AI-generated farming advice based on your query.'
+      };
+    } catch (error) {
+      console.error('Error calling AI service:', error);
+      // Fallback to basic advice
+      return {
+        advice: "For best results, consider your local soil conditions, climate, and crop variety. Consult with local agricultural experts for specific guidance.",
+        explanation: "Unable to generate AI advice at this time. Please try again later."
       };
     }
-    
-    if (queryLower.includes('खाद') || queryLower.includes('fertilizer') || queryLower.includes('nutrients')) {
-      return {
-        advice: "Use balanced NPK fertilizers and consider organic compost. Test soil pH before applying any fertilizers.",
-        explanation: "Balanced nutrition ensures healthy plant growth. Soil testing helps determine specific nutrient needs."
-      };
-    }
-    
-    if (queryLower.includes('कीट') || queryLower.includes('pest') || queryLower.includes('insects')) {
-      return {
-        advice: "Use integrated pest management (IPM) approach. Try neem oil or beneficial insects before chemical pesticides.",
-        explanation: "IPM reduces environmental impact while effectively managing pests through multiple strategies."
-      };
-    }
-    
-    if (queryLower.includes('बीज') || queryLower.includes('seed') || queryLower.includes('planting')) {
-      return {
-        advice: "Choose certified seeds suitable for your soil and climate. Follow proper spacing and planting depth guidelines.",
-        explanation: "Quality seeds and proper planting techniques are fundamental for good crop establishment and yield."
-      };
-    }
-    
-    return {
-      advice: "For best results, consider your local soil conditions, climate, and crop variety. Consult with local agricultural experts for specific guidance.",
-      explanation: "Agricultural practices should be adapted to local conditions for optimal results."
-    };
   };
 
   const fetchQueries = async () => {
@@ -104,7 +100,7 @@ export const useQueries = () => {
         return;
       }
 
-      const { advice, explanation } = generateMockAdvice(processed.cleanedText);
+      const { advice, explanation } = await generateAdviceWithAI(processed.cleanedText, processed.detectedLanguage, language);
       
       const { data, error } = await supabase
         .from('queries')
