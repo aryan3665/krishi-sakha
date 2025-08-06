@@ -30,48 +30,60 @@ const extractLocationInfo = (queryText: string): { district?: string; state?: st
 };
 
 const getRelevantData = async (queryText: string): Promise<string> => {
-  const locationInfo = extractLocationInfo(queryText);
-  let dataContext = '\n\nRELEVANT AGRICULTURAL DATA:\n';
+  console.log('🔍 Extracting agricultural data for query:', queryText);
   
-  // Add seasonal context
-  const currentMonth = new Date().getMonth() + 1;
-  const isKharif = currentMonth >= 6 && currentMonth <= 10;
-  const isRabi = currentMonth >= 11 || currentMonth <= 3;
-  
-  if (isKharif) {
-    dataContext += '- SEASON: Kharif season (June-October) - Monsoon crops\n';
-  } else if (isRabi) {
-    dataContext += '- SEASON: Rabi season (November-March) - Winter crops\n';
-  } else {
-    dataContext += '- SEASON: Summer season (April-May) - Summer crops\n';
-  }
-
-  // Add location-specific advice
-  if (locationInfo.district || locationInfo.state) {
-    dataContext += `- LOCATION: ${locationInfo.district || locationInfo.state}\n`;
-  }
-
-  // Add crop-specific context
-  if (locationInfo.crop) {
-    dataContext += `- CROP: ${locationInfo.crop}\n`;
+  try {
+    const locationInfo = extractLocationInfo(queryText);
+    console.log('📍 Location extraction result:', locationInfo);
     
-    // Add crop-specific seasonal advice
-    if (locationInfo.crop.includes('rice') || locationInfo.crop.includes('paddy')) {
-      if (isKharif) {
-        dataContext += '- RICE ADVISORY: Ideal time for transplanting. Ensure 5-7 cm standing water.\n';
-      }
-    } else if (locationInfo.crop.includes('wheat')) {
-      if (isRabi) {
-        dataContext += '- WHEAT ADVISORY: Optimal sowing time. Use certified seeds, apply NPK fertilizers.\n';
+    let dataContext = '\n\nRELEVANT AGRICULTURAL DATA:\n';
+    
+    // Add seasonal context
+    const currentMonth = new Date().getMonth() + 1;
+    const isKharif = currentMonth >= 6 && currentMonth <= 10;
+    const isRabi = currentMonth >= 11 || currentMonth <= 3;
+    
+    console.log('📅 Seasonal context:', { currentMonth, isKharif, isRabi });
+    
+    if (isKharif) {
+      dataContext += '- SEASON: Kharif season (June-October) - Monsoon crops\n';
+    } else if (isRabi) {
+      dataContext += '- SEASON: Rabi season (November-March) - Winter crops\n';
+    } else {
+      dataContext += '- SEASON: Summer season (April-May) - Summer crops\n';
+    }
+
+    // Add location-specific advice
+    if (locationInfo.district || locationInfo.state) {
+      dataContext += `- LOCATION: ${locationInfo.district || locationInfo.state}\n`;
+    }
+
+    // Add crop-specific context
+    if (locationInfo.crop) {
+      dataContext += `- CROP: ${locationInfo.crop}\n`;
+      
+      // Add crop-specific seasonal advice
+      if (locationInfo.crop.includes('rice') || locationInfo.crop.includes('paddy')) {
+        if (isKharif) {
+          dataContext += '- RICE ADVISORY: Ideal time for transplanting. Ensure 5-7 cm standing water.\n';
+        }
+      } else if (locationInfo.crop.includes('wheat')) {
+        if (isRabi) {
+          dataContext += '- WHEAT ADVISORY: Optimal sowing time. Use certified seeds, apply NPK fertilizers.\n';
+        }
       }
     }
-  }
 
-  // Add general weather context (mock data for now)
-  dataContext += '- WEATHER: Current temperature 26-30°C, humidity 65-75%\n';
-  dataContext += '- GOVERNMENT SCHEMES: PM-KISAN (₹6000/year), PMFBY (crop insurance), KCC (credit facility)\n';
-  
-  return dataContext;
+    // Add general weather context (mock data for now)
+    dataContext += '- WEATHER: Current temperature 26-30°C, humidity 65-75%\n';
+    dataContext += '- GOVERNMENT SCHEMES: PM-KISAN (₹6000/year), PMFBY (crop insurance), KCC (credit facility)\n';
+    
+    console.log('✅ Agricultural data context generated successfully');
+    return dataContext;
+  } catch (error) {
+    console.error('❌ Error in getRelevantData:', error);
+    throw error;
+  }
 };
 
 serve(async (req) => {
@@ -80,10 +92,22 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const requestId = crypto.randomUUID().substring(0, 8);
+  console.log(`🚀 [${requestId}] Starting generate-advice request`);
+
   try {
+    console.log(`📝 [${requestId}] Parsing request body...`);
     const { cleaned_query_text, detected_language, language, include_data_retrieval }: GenerateAdviceRequest = await req.json();
 
+    console.log(`📋 [${requestId}] Request parameters:`, {
+      cleaned_query_text: cleaned_query_text?.substring(0, 100) + '...',
+      detected_language,
+      language,
+      include_data_retrieval
+    });
+
     if (!cleaned_query_text) {
+      console.error(`❌ [${requestId}] Missing query text`);
       return new Response(
         JSON.stringify({ error: 'Query text is required' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -95,20 +119,26 @@ serve(async (req) => {
     let sources: string[] = [];
     
     if (include_data_retrieval) {
+      console.log(`🌾 [${requestId}] Retrieving agricultural data...`);
       try {
         dataContext = await getRelevantData(cleaned_query_text);
         sources = ['Agricultural Calendar', 'Seasonal Advisory', 'Government Schemes'];
+        console.log(`✅ [${requestId}] Agricultural data retrieved successfully`);
       } catch (error) {
-        console.warn('Error retrieving agricultural data:', error);
+        console.error(`⚠️ [${requestId}] Error retrieving agricultural data:`, error);
         dataContext = '\n\nNote: Using general agricultural knowledge.\n';
+        sources = ['General Agricultural Knowledge'];
       }
+    } else {
+      console.log(`⏭️ [${requestId}] Skipping data retrieval`);
     }
 
+    console.log(`🔑 [${requestId}] Checking API credentials...`);
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     if (!geminiApiKey) {
-      console.error('GEMINI_API_KEY not found in environment variables');
+      console.error(`❌ [${requestId}] GEMINI_API_KEY not found in environment variables`);
       return new Response(
-        JSON.stringify({ error: 'AI service temporarily unavailable' }), 
+        JSON.stringify({ error: 'AI service temporarily unavailable - missing API key' }), 
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -137,49 +167,65 @@ ${dataContext}
 
 User Query: ${cleaned_query_text}`;
 
-    console.log('Sending request to Gemini API...');
+    console.log(`🤖 [${requestId}] Sending request to Gemini API...`);
+    
+    const geminiPayload = {
+      contents: [{
+        parts: [{
+          text: systemPrompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 500,
+      },
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH", 
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        }
+      ]
+    };
+
+    console.log(`📤 [${requestId}] Gemini request payload size:`, JSON.stringify(geminiPayload).length);
     
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: systemPrompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 500,
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH", 
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
-      }),
+      body: JSON.stringify(geminiPayload),
     });
 
+    console.log(`📨 [${requestId}] Gemini API response status:`, response.status, response.statusText);
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Gemini API error:', response.status, errorData);
+      let errorData: any = {};
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        console.error(`❌ [${requestId}] Failed to parse error response:`, e);
+      }
+      
+      console.error(`❌ [${requestId}] Gemini API error:`, {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
       
       if (response.status === 429) {
         return new Response(
@@ -188,56 +234,107 @@ User Query: ${cleaned_query_text}`;
         );
       }
       
+      if (response.status === 403) {
+        return new Response(
+          JSON.stringify({ error: 'AI service access denied. Please check API configuration.' }), 
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       return new Response(
-        JSON.stringify({ error: 'Failed to generate advice. Please try again.' }), 
+        JSON.stringify({ error: `AI service error (${response.status}). Please try again.` }), 
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const data = await response.json();
-    console.log('Gemini API response received');
+    console.log(`📥 [${requestId}] Parsing Gemini response...`);
+    let data;
+    try {
+      data = await response.json();
+    } catch (error) {
+      console.error(`❌ [${requestId}] Failed to parse Gemini response JSON:`, error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid response from AI service' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`✅ [${requestId}] Gemini API response received successfully`);
 
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      console.error('Invalid response structure from Gemini API:', data);
+      console.error(`❌ [${requestId}] Invalid response structure from Gemini API:`, {
+        hasCandidates: !!data.candidates,
+        candidatesLength: data.candidates?.length,
+        firstCandidate: data.candidates?.[0],
+        fullResponse: data
+      });
       return new Response(
-        JSON.stringify({ error: 'Failed to generate advice. Please try again.' }), 
+        JSON.stringify({ error: 'Invalid AI response structure. Please try again.' }), 
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const generatedText = data.candidates[0].content.parts[0].text;
-    console.log('Generated text:', generatedText);
+    console.log(`📝 [${requestId}] Generated text length:`, generatedText?.length);
 
     // Try to parse JSON response
+    console.log(`🔍 [${requestId}] Parsing generated text as JSON...`);
     let advice: string;
     let explanation: string;
 
     try {
       const parsed = JSON.parse(generatedText);
+      console.log(`✅ [${requestId}] Successfully parsed JSON response`);
       advice = parsed.advice || generatedText;
       explanation = parsed.explanation || '';
-    } catch {
-      // If not JSON, treat as plain text advice
+    } catch (parseError) {
+      console.warn(`⚠️ [${requestId}] Failed to parse as JSON, using as plain text:`, parseError);
       advice = generatedText;
       explanation = 'AI-generated farming advice based on your query.';
     }
 
+    // Validate the final response
+    if (!advice || advice.trim().length === 0) {
+      console.error(`❌ [${requestId}] Empty advice generated`);
+      return new Response(
+        JSON.stringify({ error: 'AI generated empty advice. Please try again.' }), 
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const finalResponse = {
+      advice: advice.trim(),
+      explanation: explanation.trim(),
+      sources: sources.length > 0 ? sources : undefined
+    };
+
+    console.log(`🎉 [${requestId}] Request completed successfully:`, {
+      adviceLength: finalResponse.advice.length,
+      explanationLength: finalResponse.explanation.length,
+      sourcesCount: finalResponse.sources?.length || 0
+    });
+
     return new Response(
-      JSON.stringify({ 
-        advice: advice.trim(),
-        explanation: explanation.trim(),
-        sources: sources.length > 0 ? sources : undefined
-      }), 
+      JSON.stringify(finalResponse), 
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       }
     );
 
-  } catch (error) {
-    console.error('Error in generate-advice function:', error);
+  } catch (error: any) {
+    console.error(`💥 [${requestId}] Unexpected error in generate-advice function:`, {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    });
+    
     return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }), 
+      JSON.stringify({ 
+        error: `Unexpected server error: ${error.message || 'Unknown error'}. Please try again.`,
+        requestId 
+      }), 
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
