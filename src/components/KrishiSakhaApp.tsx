@@ -27,6 +27,7 @@ export const KrishiSakhaApp = () => {
     advice: string;
     explanation: string;
     source: string;
+    sources?: string[];
   } | null>(null);
   const { user, signOut } = useAuth();
   const { queries, loading, submitQuery, deleteQuery } = useQueries();
@@ -37,10 +38,15 @@ export const KrishiSakhaApp = () => {
     try {
       const result = await submitQuery(query, language);
       if (result) {
+        const parsedSources = (result as any).sources ? 
+          (typeof (result as any).sources === 'string' ? JSON.parse((result as any).sources) : (result as any).sources) : 
+          undefined;
+          
         setCurrentAdvice({
           advice: result.advice,
           explanation: result.explanation || "",
-          source: "Krishi Sakha AI"
+          source: "Krishi Sakha AI",
+          sources: parsedSources
         });
       }
     } catch (error) {
@@ -102,7 +108,7 @@ export const KrishiSakhaApp = () => {
             </div>
 
             {/* Current advice */}
-            {currentAdvice && <AdviceCard advice={currentAdvice.advice} explanation={currentAdvice.explanation} source={currentAdvice.source} language={language} onTranslate={handleTranslate} />}
+            {currentAdvice && <AdviceCard advice={currentAdvice.advice} explanation={currentAdvice.explanation} source={currentAdvice.source} language={language} sources={currentAdvice.sources} onTranslate={handleTranslate} />}
 
             {/* Recent activity */}
             {queries.length > 0 && <div className="glass-card p-6 rounded-2xl shadow-soft">
