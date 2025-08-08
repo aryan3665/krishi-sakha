@@ -11,11 +11,10 @@ interface AdviceCardProps {
   explanation: string;
   source: string;
   language: string;
-  sources?: string[];
   onTranslate: (targetLang: string) => void;
 }
 
-export const AdviceCard = ({ advice, explanation, source, language, sources, onTranslate }: AdviceCardProps) => {
+export const AdviceCard = ({ advice, explanation, source, language, onTranslate }: AdviceCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -208,19 +207,10 @@ export const AdviceCard = ({ advice, explanation, source, language, sources, onT
           </div>
 
           {/* Source badge */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs">
               {getStringTranslation(language, 'source')}: {source}
             </Badge>
-            {sources && sources.length > 0 && (
-              <div className="flex gap-1 flex-wrap">
-                {sources.map((dataSource, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {dataSource}
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Expandable explanation */}
