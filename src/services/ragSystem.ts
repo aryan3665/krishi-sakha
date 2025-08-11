@@ -292,7 +292,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संपर्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -346,7 +346,7 @@ export class RetrievalAugmentedGeneration {
   }
 
   private generateTransparencySection(sources: SourceReference[], response: RAGResponse, isHindi: boolean): string {
-    let section = isHindi ? '🔍 **यह उत्तर कैसे तैयार किया गया:**\n' : '🔍 **How This Answer Was Generated:**\n';
+    let section = isHindi ? '🔍 **यह उत्तर कैसे त��यार किया गया:**\n' : '🔍 **How This Answer Was Generated:**\n';
 
     const dataSourceCount = sources.length;
     const freshDataCount = sources.filter(s => s.freshness === 'fresh').length;
@@ -359,7 +359,7 @@ export class RetrievalAugmentedGeneration {
       section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
       if (sources.some(s => s.data?.missingDataNote)) {
-        section += `• कुछ डेटा अनुपलब्ध होने पर पारदर्शी सूचना दी गई\n`;
+        section += `• कुछ डेटा अनु��लब्ध होने पर पारदर्शी सूचना दी गई\n`;
       }
     } else {
       section += `• Analyzed your query to identify topic, crop, and location\n`;
@@ -403,7 +403,7 @@ export class RetrievalAugmentedGeneration {
     if (isHindi) {
       response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा रहेगा?"\n`;
       response += `• 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
-      response += `• 🐛 "${location} में कपास के लिए कीट चेतावनी"\n`;
+      response += `• 🐛 "${location} में कपास के लिए कीट चेताव���ी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
       response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
       response += `• 💡 "${location} में इस मौसम में कौन सी फसल लगाएं?"`;
@@ -512,6 +512,9 @@ INSTRUCTIONS:
 - Use simple, farmer-friendly language
 - Keep response under 200 words
 - Be practical and actionable
+- DO NOT make up specific prices or market data
+- Be honest about data limitations
+- For price queries, suggest contacting local mandis/markets
 - ${isHindi ? 'हिंदी में जवाब दें' : 'Respond in English'}
 
 RESPONSE:`;
