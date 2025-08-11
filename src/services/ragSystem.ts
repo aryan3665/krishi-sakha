@@ -348,7 +348,7 @@ export class RetrievalAugmentedGeneration {
       section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
       section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प्राप्त हुई\n`;
       section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
-      section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
+      section += `• ��िश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
       if (sources.some(s => s.data?.missingDataNote)) {
         section += `• कुछ डेटा अनुपलब्ध होने पर पारदर्शी सूचना दी गई\n`;
@@ -368,12 +368,56 @@ export class RetrievalAugmentedGeneration {
     return section;
   }
 
+  private generateSuggestedQuestionsResponse(query: string, language: string, context: QueryContext): string {
+    const isHindi = language === 'hi';
+    const location = context.location ? `${context.location.district}, ${context.location.state}` : (isHindi ? 'आपका क्षेत्र' : 'your region');
+
+    // Start with query as bold heading
+    let response = `**${query}**\n\n`;
+
+    response += isHindi ?
+      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
+      '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n';
+
+    response += isHindi ? '📝 **आप ये सवाल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
+
+    // Generate location-specific suggestions
+    if (isHindi) {
+      response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा रहेगा?"\n`;
+      response += `• 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
+      response += `• 🐛 "${location} में कप��स के लिए कीट चेतावनी"\n`;
+      response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
+      response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
+      response += `• 💡 "${location} में इस मौसम में कौन सी फसल लगाएं?"`;
+    } else {
+      response += `• 🌦 "Weather forecast for ${location} for next 5 days"\n`;
+      response += `• 💰 "Wheat and rice mandi prices in ${location}"\n`;
+      response += `• 🐛 "Pest alerts for cotton in ${location}"\n`;
+      response += `• 📜 "Government schemes for farmers in ${location}"\n`;
+      response += `• 🌱 "How to get soil testing done in ${location}?"\n`;
+      response += `• 💡 "Which crops to plant this season in ${location}?"`;
+    }
+
+    return response;
+  }
+
   private getFallbackAdvisory(query: string, language: string, reason: string): RAGResponse {
     const isHindi = language === 'hi';
 
-    const fallbackAdvice = isHindi ?
-      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
-      `🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n⚠️ ${reason === 'Invalid query format' ? 'Please ask a clear farming question' : 'Live data temporarily unavailable'}`;
+    // Start with query as bold heading
+    let fallbackAdvice = `**${query}**\n\n`;
+
+    if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
+      // Case 1: Cannot understand query or system down
+      fallbackAdvice += isHindi ?
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पंजाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
+    } else {
+      // Case 2: General guidance with suggestions
+      fallbackAdvice += isHindi ?
+        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
+        '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
+    }
 
     return {
       answer: fallbackAdvice,
