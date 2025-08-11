@@ -48,6 +48,11 @@ export const KrishiSakhaApp = () => {
   // Generate advice and store in database
   const generateAdvice = async (query: string) => {
     try {
+      // STEP 1: Run health check before processing
+      const healthStatus = await systemHealthChecker.checkSystemHealth();
+      console.log('🔍 System health check:', healthStatus.overall);
+
+      // STEP 2: Process the query regardless of health status
       const result = await submitQuery(query, language);
       if (result) {
         setCurrentAdvice({
@@ -63,6 +68,23 @@ export const KrishiSakhaApp = () => {
       }
     } catch (error) {
       console.error('Error generating advice:', error);
+
+      // NEVER block - provide fallback guidance
+      const isHindi = language === 'hi';
+      const fallbackAdvice = isHindi ?
+        `🌾 **आपातकालीन कृषि सलाह**\n\n💡 **तत्काल सुझाव:**\n• मिट्टी की जांच नियमित रूप से कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि विशेषज्ञ से सलाह लें\n• उचित सिंचाई और पोषण का ध्यान रखें\n\n📞 **सहायता:** किसान कॉल सेंटर 1800-180-1551\n\n⚠️ **नोट:** सिस्टम में अस्थायी समस्या है। कृपया बाद में पुनः प्रयास करें।` :
+        `🌾 **Emergency Agricultural Guidance**\n\n💡 **Immediate Suggestions:**\n• Test your soil regularly for nutrients\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Ensure proper irrigation and nutrition\n\n📞 **Support:** Kisan Call Center 1800-180-1551\n\n⚠️ **Note:** System experiencing temporary issues. Please try again later.`;
+
+      setCurrentAdvice({
+        advice: fallbackAdvice,
+        explanation: "Emergency guidance due to system error",
+        source: "Krishi Sakha AI (Fallback Mode)",
+        sources: [],
+        confidence: 0.3,
+        factualBasis: 'low',
+        generatedContent: ['Emergency fallback guidance'],
+        disclaimer: "This is basic guidance due to system issues. Normal service will resume shortly."
+      });
     }
   };
 
