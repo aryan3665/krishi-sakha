@@ -138,37 +138,59 @@ export const EnhancedAdviceCard = ({
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-3 mt-3">
             {sources.map((source, index) => (
-              <Card key={index} className="p-3 bg-gray-50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{getSourceTypeIcon(source.type)}</span>
-                      <h4 className="font-medium text-sm">{source.source}</h4>
-                      <Badge variant="secondary" className="text-xs">
-                        {source.type}
+            <Card key={index} className="p-3 bg-gray-50">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">{getSourceTypeIcon(source.type)}</span>
+                    <h4 className="font-medium text-sm">{source.source}</h4>
+                    <Badge variant="secondary" className="text-xs">
+                      {source.type}
+                    </Badge>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {source.citation}
+                  </p>
+
+                  {/* Show missing data notes transparently */}
+                  {source.data?.missingDataNote && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-2">
+                      <p className="text-xs text-yellow-800">
+                        ⚠️ {source.data.missingDataNote}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Show data coverage status */}
+                  {source.data?.coverage && (
+                    <div className="mb-2">
+                      <Badge variant="outline" className={`text-xs ${
+                        source.data.coverage === 'complete' ? 'text-green-700 border-green-300' :
+                        source.data.coverage === 'partial' ? 'text-yellow-700 border-yellow-300' :
+                        'text-red-700 border-red-300'
+                      }`}>
+                        {source.data.coverage} data
                       </Badge>
                     </div>
-                    
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {source.citation}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-xs">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span className={getFreshnessColor(source.freshness)}>
-                          {source.freshness}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Shield className="h-3 w-3" />
-                        <span>{(source.confidence * 100).toFixed(0)}% confidence</span>
-                      </div>
+                  )}
+
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span className={getFreshnessColor(source.freshness)}>
+                        {source.freshness}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Shield className="h-3 w-3" />
+                      <span>{(source.confidence * 100).toFixed(0)}% confidence</span>
                     </div>
                   </div>
                 </div>
-              </Card>
-            ))}
+              </div>
+            </Card>
+          ))}
           </CollapsibleContent>
         </Collapsible>
 
