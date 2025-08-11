@@ -19,18 +19,43 @@ export const AuthForm = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    const { error } = await signIn(email, password);
-    
-    if (error) {
+
+    if (!email || !password) {
       toast({
-        title: "Sign in failed",
-        description: error.message,
+        title: "Validation Error",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        console.error('Sign in error:', error);
+        toast({
+          title: "Sign in failed",
+          description: error.message || "Failed to sign in. Please check your credentials.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Signed in successfully!",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected sign in error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
 
