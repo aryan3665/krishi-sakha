@@ -148,16 +148,24 @@ export const AuthForm = () => {
       if (error) {
         console.error('Google sign in error:', error);
         let errorMessage = error.message;
+        let title = "Google sign in failed";
 
         // Provide more specific error messages
         if (error.message?.includes('popup')) {
           errorMessage = "Popup was blocked. Please allow popups and try again.";
         } else if (error.message?.includes('OAuth')) {
-          errorMessage = "Google sign-in is not properly configured. Please try email/password instead.";
+          errorMessage = "Google OAuth is not configured. Click 'Debug' below for setup instructions.";
+        } else if (error.message?.includes('refused to connect')) {
+          title = "Google OAuth Configuration Error";
+          errorMessage = "The redirect URL is not authorized. Click 'Debug' below to fix this.";
+        } else if (error.message?.includes('access_denied')) {
+          errorMessage = "Access denied. Please try again or use email/password.";
+        } else {
+          errorMessage = `${error.message}. Click 'Debug' for configuration help.`;
         }
 
         toast({
-          title: "Google sign in failed",
+          title,
           description: errorMessage,
           variant: "destructive",
         });
