@@ -47,10 +47,10 @@ export const DemoModeHandler = ({ onRunExample, isLoading, language }: DemoModeH
   ];
 
   const userGuide = isHindi ? {
-    title: "उपयोग गाइड",
+    title: "���पयोग गाइड",
     items: [
-      "💬 **प्रश्न पूछें**: टेक्स्ट या वॉइस में ���पना कृषि प्रश्न पूछें",
-      "📊 **परिणाम पढ़ें**: इमोजी और स्रोत बैज के साथ संरचित उत्तर",
+      "💬 **प्रश्न पूछें**: टेक्स्ट या वॉइस में अपना कृषि प्रश्न पूछें",
+      "📊 **प���िणाम पढ़ें**: इमोजी और स्रोत बैज के साथ संरचित उत्तर",
       "⭐ **विश्वसनीयता समझें**: उच्च/मध्यम/निम्न स्कोर देखें", 
       "📱 **ऑफलाइन मोड**: कैश्ड डेटा से पुराने उत्तर देखें",
       "💾 **सेव करें**: हिस्ट्री में महत्वपूर्ण सलाह सेव करें"
@@ -70,7 +70,7 @@ export const DemoModeHandler = ({ onRunExample, isLoading, language }: DemoModeH
     {
       id: 'weather_simple',
       category: isHindi ? 'मौसम' : 'Weather',
-      query: isHindi ? 'पंजाब में गेहूं की बुआई क�� लिए मौसम कैसा है?' : 'How is the weather for wheat sowing in Punjab?',
+      query: isHindi ? 'पंजाब में गेहूं की बुआई के लिए मौसम कैसा है?' : 'How is the weather for wheat sowing in Punjab?',
       language: language,
       difficulty: 'Simple',
       icon: '🌦️'
@@ -94,7 +94,7 @@ export const DemoModeHandler = ({ onRunExample, isLoading, language }: DemoModeH
     {
       id: 'multi_domain',
       category: isHindi ? 'मल्टी-डोमेन' : 'Multi-domain',
-      query: isHindi ? 'मध्य प्रदेश में सोयाबीन के लिए मौसम, मिट्टी और बाजार की जानकारी दें' : 'Provide weather, soil and market information for soybean in Madhya Pradesh',
+      query: isHindi ? 'मध्य प्रदेश में सोयाबीन के लिए मौसम, मिट्टी और बाजा�� की जानकारी दें' : 'Provide weather, soil and market information for soybean in Madhya Pradesh',
       language: language,
       difficulty: 'Complex',
       icon: '🔄'
@@ -129,6 +129,20 @@ export const DemoModeHandler = ({ onRunExample, isLoading, language }: DemoModeH
 
   return (
     <div className="space-y-6">
+      {/* System Status Alert */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+          <Sparkles className="h-4 w-4" />
+          {isHindi ? '🌾 कृषि सखा AI डेमो मोड' : '🌾 Krishi Sakha AI Demo Mode'}
+        </h3>
+        <p className="text-sm text-blue-800">
+          {isHindi ?
+            'यह एक व्यापक कृषि सलाहकार सिस्टम का डेमो है। नीचे सिस्टम ओवरव्यू और उपयोग गाइड देखें।' :
+            'This is a demo of a comprehensive agricultural advisory system. Please review the system overview and user guide below.'
+          }
+        </p>
+      </div>
+
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="overview">📜 {isHindi ? 'परिचय' : 'Overview'}</TabsTrigger>
@@ -243,7 +257,7 @@ export const DemoModeHandler = ({ onRunExample, isLoading, language }: DemoModeH
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 {isHindi ? 
-                  'नीचे दिए गए उदाहरणों को चलाकर सिस्टम की क्षमताओं को देखें:' :
+                  'नीचे दिए गए उदाहरणों को चलाकर सिस्टम की क्षम���ाओं को देखें:' :
                   'Run the examples below to see the system capabilities in action:'
                 }
               </p>
@@ -311,7 +325,7 @@ export const DemoModeHandler = ({ onRunExample, isLoading, language }: DemoModeH
                 </h4>
                 <p className="text-sm text-blue-800">
                   {isHindi ? 
-                    'यह डेमो वास्तविक भारतीय कृषि परिस्थितियों का प्रतिनिधित्व करने वाले सिम्युलेटेड डेटा का उपयोग करता है। उत्पादन में, यह वास्तविक सरकारी APIs और डेटासेट से जुड़ेगा।' :
+                    'यह डेमो वास्तविक भा��तीय कृषि परिस्थितियों का प्रतिनिधित्व करने वाले सिम्युलेटेड डेटा का उपयोग करता है। उत्पादन में, यह वास्तविक सरकारी APIs और डेटासेट से जुड़ेगा।' :
                     'This demo uses simulated data that represents realistic Indian agricultural scenarios. In production, this would connect to actual government APIs and datasets.'
                   }
                 </p>
