@@ -15,6 +15,9 @@ export interface Query {
   advice: string;
   explanation: string | null;
   created_at: string;
+  sources?: any[];
+  confidence?: number;
+  factual_basis?: 'high' | 'medium' | 'low';
 }
 
 export const useQueries = () => {
