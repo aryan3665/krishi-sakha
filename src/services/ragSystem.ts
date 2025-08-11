@@ -63,33 +63,78 @@ export class RetrievalAugmentedGeneration {
         return this.getFallbackAdvisory(query, language, 'Invalid query format');
       }
 
-      // Step 2: Retrieve relevant data with retries
-      const retrievedData = await this.retrieveDataWithRetries(processed.extractedContext);
+      // **NEW APPROACH: LLM-First with Selective Grounding**
 
-      // Step 3: Always ensure we have some data (use fallback if needed)
-      if (retrievedData.length === 0) {
-        return this.getFallbackAdvisory(query, language, 'No data sources available');
+      // Step 2: Generate initial LLM response (without grounding)
+      console.log('🤖 Generating initial LLM response...');
+      const initialPrompt = this.constructInitialPrompt(processed.cleanedText, language, processed.extractedContext);
+      const initialAnswer = await this.callLLM(initialPrompt);
+
+      // Step 3: Analyze if grounding data is needed based on query type and LLM response
+      const needsGrounding = this.shouldGroundResponse(processed.extractedContext, initialAnswer);
+
+      let response: RAGResponse;
+
+      if (needsGrounding) {
+        console.log('🔍 Query needs grounding - retrieving hyperlocal data');
+
+        // Step 4: Retrieve relevant data for grounding
+        const retrievedData = await this.retrieveDataWithRetries(processed.extractedContext);
+
+        if (retrievedData.length > 0) {
+          // Step 5: Check if retrieved data matches the query context
+          const relevantData = this.filterRelevantData(retrievedData, processed.extractedContext);
+
+          if (relevantData.length > 0) {
+            console.log('✅ Found relevant data - grounding LLM response');
+
+            // Step 6: Create grounded response
+            const sources = this.createSourceReferences(relevantData);
+            const factualContext = this.buildFactualContext(relevantData, processed.extractedContext);
+            const groundedPrompt = this.constructGroundedPrompt(processed.cleanedText, initialAnswer, factualContext, language);
+            const groundedAnswer = await this.callLLM(groundedPrompt);
+
+            response = {
+              answer: groundedAnswer,
+              sources,
+              confidence: this.calculateDynamicConfidence(relevantData, processed.extractedContext),
+              factualBasis: this.assessFactualBasis(relevantData),
+              generatedContent: this.identifyGeneratedContent(groundedAnswer),
+              disclaimer: this.getSystemHealthDisclaimer()
+            };
+          } else {
+            console.log('⚠️ No relevant data found - using LLM response only');
+            response = {
+              answer: initialAnswer,
+              sources: [],
+              confidence: 0.6, // Medium confidence for ungrounded response
+              factualBasis: 'low',
+              generatedContent: [initialAnswer],
+              disclaimer: 'Response based on general agricultural knowledge only'
+            };
+          }
+        } else {
+          console.log('❌ No data retrieved - using LLM response only');
+          response = {
+            answer: initialAnswer,
+            sources: [],
+            confidence: 0.5,
+            factualBasis: 'low',
+            generatedContent: [initialAnswer],
+            disclaimer: 'No current data available - general guidance provided'
+          };
+        }
+      } else {
+        console.log('📝 Query does not need grounding - using LLM response');
+        response = {
+          answer: initialAnswer,
+          sources: [],
+          confidence: 0.75, // Higher confidence for general queries
+          factualBasis: 'medium',
+          generatedContent: [],
+          disclaimer: 'General agricultural guidance'
+        };
       }
-
-      // Step 4: Create source references
-      const sources = this.createSourceReferences(retrievedData);
-
-      // Step 5: Build factual context for LLM
-      const factualContext = this.buildFactualContext(retrievedData, processed.extractedContext);
-
-      // Step 6: Generate grounded response
-      const llmPrompt = this.constructFarmerFriendlyPrompt(processed.cleanedText, factualContext, language, processed.extractedContext);
-      const answer = await this.callLLM(llmPrompt);
-
-      // Step 7: Format response attractively
-      const response: RAGResponse = {
-        answer: answer,
-        sources,
-        confidence: this.calculateConfidence(retrievedData),
-        factualBasis: this.assessFactualBasis(retrievedData),
-        generatedContent: [],
-        disclaimer: this.getSystemHealthDisclaimer()
-      };
 
       const formattedResponse = this.formatFarmerFriendlyResponse(response, sources, language, query);
 
@@ -234,7 +279,7 @@ export class RetrievalAugmentedGeneration {
     // Soil Section
     if (soilData) {
       formattedAnswer += isHindi ? '🌱 **मिट्टी और उर्वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
-      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रकार' : 'Soil Type'}: ${soilData.soilType}\n`;
+      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रका��' : 'Soil Type'}: ${soilData.soilType}\n`;
       formattedAnswer += `• pH: ${soilData.pH}\n`;
       if (soilData.recommendations) {
         soilData.recommendations.slice(0, 2).forEach((rec: string) => {
@@ -365,7 +410,7 @@ RESPONSE:`;
     const isHindi = language === 'hi';
 
     const instructions = isHindi ?
-      'नीचे दिए गए वर्तमा�� डेटा के साथ अपनी सलाह को अपडेट करें।' :
+      'नीचे दिए गए वर्तमान डेटा के साथ अपनी सलाह को अपडेट करें।' :
       'Update your advice with the current data provided below.';
 
     return `${instructions}
