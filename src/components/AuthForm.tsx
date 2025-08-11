@@ -341,20 +341,37 @@ export const AuthForm = () => {
             </Button>
           </div>
 
-          {/* Debug Mode Button */}
-          {connectionStatus === 'error' && (
-            <div className="mt-4 text-center">
+          {/* Debug and Help Options */}
+          <div className="mt-4 space-y-2">
+            <div className="text-center">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowDebugger(true)}
-                className="text-red-600 hover:text-red-700"
+                className="text-blue-600 hover:text-blue-700"
               >
                 <Settings className="h-4 w-4 mr-1" />
-                Debug Configuration Issues
+                Debug Authentication Issues
               </Button>
             </div>
-          )}
+
+            {connectionStatus === 'error' && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800 text-center">
+                  ⚠️ Authentication service unavailable. Please check configuration.
+                </p>
+              </div>
+            )}
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-xs text-yellow-800 text-center">
+                <strong>Known Issues:</strong><br />
+                • Google OAuth: Configure redirect URLs<br />
+                • Email signup: Configure SMTP settings<br />
+                • Click "Debug" above for detailed fixes
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
