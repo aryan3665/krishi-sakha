@@ -43,7 +43,7 @@ export class RetrievalAugmentedGeneration {
         return this.formatFarmerFriendlyResponse({
           ...cached.response,
           disclaimer: `📅 Cached response from ${cached.timestamp.toLocaleDateString()}. ${cached.response.disclaimer || ''}`
-        }, cached.response.sources, language);
+        }, cached.response.sources, language, query);
       }
 
       // Check if online for fresh data
@@ -278,7 +278,7 @@ export class RetrievalAugmentedGeneration {
     const isHindi = language === 'hi';
 
     const fallbackAdvice = isHindi ?
-      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझा��:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
+      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
       `🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n⚠️ ${reason === 'Invalid query format' ? 'Please ask a clear farming question' : 'Live data temporarily unavailable'}`;
 
     return {
@@ -365,7 +365,7 @@ RESPONSE:`;
     const isHindi = language === 'hi';
 
     const instructions = isHindi ?
-      'नीचे दिए गए वर्तमान डेटा के साथ अपनी सलाह को अपडेट करें।' :
+      'नीचे दिए गए वर्तमा�� डेटा के साथ अपनी सलाह को अपडेट करें।' :
       'Update your advice with the current data provided below.';
 
     return `${instructions}
