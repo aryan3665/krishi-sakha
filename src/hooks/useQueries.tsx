@@ -39,7 +39,7 @@ export const useQueries = () => {
         `🌾 **Agricultural Advisory** (General guidance due to system error)\n\n💡 **Immediate Suggestions:**\n• Test your soil regularly for nutrients\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📞 **Support:**\n• Kisan Call Center: 1800-180-1551\n• Visit nearest Krishi Vigyan Kendra\n\n⚠️ **Note:** This is general advice. Check internet connection for detailed, data-driven guidance.`;
 
       return {
-        answer: fallbackAnswer,
+        answer: `**${queryText}**\n\n${fallbackAnswer}`,
         sources: [],
         confidence: 0.4,
         factualBasis: 'low',
