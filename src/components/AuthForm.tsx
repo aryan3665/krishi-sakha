@@ -112,15 +112,24 @@ export const AuthForm = () => {
 
       if (error) {
         console.error('Sign up error:', error);
+        let errorMessage = error.message || "Failed to create account.";
+
+        // Provide specific guidance for common email issues
+        if (error.message?.includes('email')) {
+          errorMessage = "Email service not configured. Click 'Debug' below for SMTP setup instructions.";
+        } else if (error.message?.includes('User already registered')) {
+          errorMessage = "This email is already registered. Try signing in instead.";
+        }
+
         toast({
           title: "Sign up failed",
-          description: error.message || "Failed to create account. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       } else {
         toast({
           title: "Account created successfully!",
-          description: "Please check your email and click the confirmation link to activate your account.",
+          description: "Check your email for a confirmation link. If no email arrives, check the Debug section below.",
         });
         // Clear form on success
         setEmail('');
