@@ -114,7 +114,28 @@ export const KrishiSakhaApp = () => {
             </div>
 
             {/* Current advice */}
-            {currentAdvice && <AdviceCard advice={currentAdvice.advice} explanation={currentAdvice.explanation} source={currentAdvice.source} language={language} onTranslate={handleTranslate} />}
+            {currentAdvice && (
+              currentAdvice.sources && currentAdvice.sources.length > 0 ? (
+                <EnhancedAdviceCard
+                  advice={currentAdvice.advice}
+                  sources={currentAdvice.sources}
+                  confidence={currentAdvice.confidence || 0.5}
+                  factualBasis={currentAdvice.factualBasis || 'medium'}
+                  generatedContent={currentAdvice.generatedContent || []}
+                  disclaimer={currentAdvice.disclaimer}
+                  language={language}
+                  onTranslate={handleTranslate}
+                />
+              ) : (
+                <AdviceCard
+                  advice={currentAdvice.advice}
+                  explanation={currentAdvice.explanation}
+                  source={currentAdvice.source}
+                  language={language}
+                  onTranslate={handleTranslate}
+                />
+              )
+            )}
 
             {/* Recent activity */}
             {queries.length > 0 && <div className="glass-card p-6 rounded-2xl shadow-soft">
