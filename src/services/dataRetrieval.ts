@@ -76,58 +76,80 @@ export class DataRetrievalAgent {
     const results: RetrievedData[] = [];
 
     try {
-      // Determine crops to show based on query
-      let crops: string[];
-      if (crop?.name) {
-        // If specific crop mentioned, show that crop + 2 related ones
-        crops = [crop.name];
+      // Always attempt to get the requested crop data first
+      let requestedCropData = null;
+      let availableCrops: string[] = [];
+      let missingDataNote = null;
 
-        // Add related crops based on type
-        const cropType = this.getCropCategory(crop.name);
-        const relatedCrops = this.getRelatedCrops(crop.name, cropType);
-        crops.push(...relatedCrops.slice(0, 2));
+      if (crop?.name) {
+        // Simulate checking if data is available for the requested crop
+        const hasRequestedCropData = this.isDataAvailableForCrop(crop.name, location);
+
+        if (hasRequestedCropData) {
+          // Add requested crop to available crops
+          availableCrops = [crop.name];
+
+          // Add related crops
+          const cropType = this.getCropCategory(crop.name);
+          const relatedCrops = this.getRelatedCrops(crop.name, cropType);
+          availableCrops.push(...relatedCrops.slice(0, 2));
+        } else {
+          // Requested crop data not available - note this
+          missingDataNote = `Market price data for ${crop.name.toLowerCase()} in ${location.district}, ${location.state} is currently unavailable. Please check back later or consult local mandi sources.`;
+
+          // Show alternative major crops instead
+          availableCrops = ['Rice', 'Wheat', 'Maize'];
+        }
       } else {
-        // Default major crops
-        crops = ['Rice', 'Wheat', 'Maize'];
+        // General query - show major crops
+        availableCrops = ['Rice', 'Wheat', 'Maize', 'Onion', 'Potato'];
       }
+
+      // Generate price data for available crops
+      const priceData = availableCrops.map(cropName => {
+        const basePrice = this.getBasePriceForCrop(cropName);
+        const variation = 0.8 + Math.random() * 0.4; // ±20% variation
+
+        const minPrice = Math.round(basePrice * variation * 0.9);
+        const maxPrice = Math.round(basePrice * variation * 1.15);
+        const modalPrice = Math.round(basePrice * variation);
+
+        return {
+          crop: cropName,
+          variety: this.getVarietyForCrop(cropName),
+          minPrice,
+          maxPrice,
+          modalPrice,
+          unit: this.getUnitForCrop(cropName),
+          market: `${location.district} APMC`,
+          trend: Math.random() > 0.5 ? 'increasing' : ['stable', 'decreasing'][Math.floor(Math.random() * 2)],
+          dataAvailable: true
+        };
+      });
 
       const marketData = {
         location: `${location.district}, ${location.state}`,
         date: new Date().toISOString().split('T')[0],
         requestedCrop: crop?.name,
-        prices: crops.map(cropName => {
-          const basePrice = this.getBasePriceForCrop(cropName);
-          const variation = 0.8 + Math.random() * 0.4; // ±20% variation
-
-          const minPrice = Math.round(basePrice * variation * 0.9);
-          const maxPrice = Math.round(basePrice * variation * 1.15);
-          const modalPrice = Math.round(basePrice * variation);
-
-          return {
-            crop: cropName,
-            variety: this.getVarietyForCrop(cropName),
-            minPrice,
-            maxPrice,
-            modalPrice,
-            unit: this.getUnitForCrop(cropName),
-            market: `${location.district} APMC`,
-            trend: Math.random() > 0.5 ? 'increasing' : ['stable', 'decreasing'][Math.floor(Math.random() * 2)]
-          };
-        }),
+        requestedCropDataAvailable: crop?.name ? !missingDataNote : true,
+        missingDataNote,
+        prices: priceData,
         trend: Math.random() > 0.5 ? 'increasing' : 'stable',
-        lastUpdated: new Date()
+        lastUpdated: new Date(),
+        dataSource: 'AGMARKNET',
+        coverage: missingDataNote ? 'partial' : 'complete'
       };
 
       const result: RetrievedData = {
-        source: 'AGMARKNET',
+        source: 'AGMARKNET Market Data',
         type: 'market',
         data: marketData,
-        confidence: crop?.name ? 0.9 : 0.7, // Higher confidence if specific crop requested
+        confidence: missingDataNote ? 0.7 : 0.9, // Lower confidence if requested data missing
         timestamp: new Date(),
         location,
         metadata: {
           freshness: 'fresh',
-          reliability: 'high'
+          reliability: missingDataNote ? 'partial' : 'high'
         }
       };
 
@@ -135,9 +157,46 @@ export class DataRetrievalAgent {
       results.push(result);
     } catch (error) {
       console.error('Error fetching market data:', error);
+
+      // Even on error, provide fallback data structure
+      const fallbackResult: RetrievedData = {
+        source: 'Market Data (Limited)',
+        type: 'market',
+        data: {
+          location: `${location.district}, ${location.state}`,
+          requestedCrop: crop?.name,
+          missingDataNote: 'Market data temporarily unavailable. Please try again later.',
+          prices: [],
+          coverage: 'unavailable'
+        },
+        confidence: 0.3,
+        timestamp: new Date(),
+        location,
+        metadata: {
+          freshness: 'stale',
+          reliability: 'low'
+        }
+      };
+      results.push(fallbackResult);
     }
 
     return results;
+  }
+
+  private isDataAvailableForCrop(cropName: string, location: LocationInfo): boolean {
+    // Simulate data availability - in real implementation, this would check actual API
+    // For demo purposes, randomly make some crops "unavailable"
+    const cropLower = cropName.toLowerCase();
+
+    // Make certain crops occasionally "unavailable" to demonstrate the feature
+    const sometimesUnavailable = ['potato', 'tomato', 'brinjal', 'okra', 'carrot'];
+
+    if (sometimesUnavailable.includes(cropLower)) {
+      return Math.random() > 0.3; // 30% chance of being unavailable
+    }
+
+    // Major crops are usually available
+    return Math.random() > 0.1; // 10% chance of being unavailable
   }
 
   private getCropCategory(cropName: string): string {
