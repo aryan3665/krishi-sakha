@@ -175,6 +175,24 @@ export const AuthForm = () => {
     setIsLoading(false);
   };
 
+  // Show debugger if requested
+  if (showDebugger) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+        <div className="w-full max-w-4xl space-y-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowDebugger(false)}
+            className="mb-4"
+          >
+            ← Back to Login
+          </Button>
+          <AuthDebugger />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
       <Card className="w-full max-w-md">
