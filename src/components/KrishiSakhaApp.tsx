@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { QueryInput } from "./QueryInput";
 import { AdviceCard } from "./AdviceCard";
+import { EnhancedAdviceCard } from "./EnhancedAdviceCard";
+import { SourceReference } from "@/services/ragSystem";
 import { QueryHistory } from "./QueryHistory";
 import { BottomNavigation } from "./BottomNavigation";
 import { LanguageSelector } from "./LanguageSelector";
