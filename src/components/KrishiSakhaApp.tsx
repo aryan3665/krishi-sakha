@@ -47,7 +47,12 @@ export const KrishiSakhaApp = () => {
         setCurrentAdvice({
           advice: result.advice,
           explanation: result.explanation || "",
-          source: "Krishi Sakha AI"
+          source: "Krishi Sakha AI",
+          sources: result.sources || [],
+          confidence: result.confidence || 0.5,
+          factualBasis: result.factual_basis || 'medium',
+          generatedContent: [],
+          disclaimer: result.explanation?.includes('factual basis') ? result.explanation : undefined
         });
       }
     } catch (error) {
