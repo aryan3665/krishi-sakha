@@ -136,7 +136,7 @@ export class RetrievalAugmentedGeneration {
         };
       }
 
-      const formattedResponse = this.formatFarmerFriendlyResponse(response, sources, language, query);
+      const formattedResponse = this.formatFarmerFriendlyResponse(response, response.sources, language, query);
 
       // Cache the response for offline use
       offlineCache.cacheResponse(
@@ -279,7 +279,7 @@ export class RetrievalAugmentedGeneration {
     // Soil Section
     if (soilData) {
       formattedAnswer += isHindi ? '🌱 **मिट्टी और उर्वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
-      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रका��' : 'Soil Type'}: ${soilData.soilType}\n`;
+      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रकार' : 'Soil Type'}: ${soilData.soilType}\n`;
       formattedAnswer += `• pH: ${soilData.pH}\n`;
       if (soilData.recommendations) {
         soilData.recommendations.slice(0, 2).forEach((rec: string) => {
