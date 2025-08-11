@@ -118,14 +118,18 @@ export class RetrievalAugmentedGeneration {
             };
           }
         } else {
-          console.log('❌ No data retrieved - using LLM response only');
+          console.log('❌ No data retrieved - providing guidance with suggestions');
+          // When no data is available, provide helpful suggestions
+          const suggestedQuestionsResponse = this.generateSuggestedQuestionsResponse(
+            processed.cleanedText, language, processed.extractedContext
+          );
           response = {
-            answer: initialAnswer,
+            answer: suggestedQuestionsResponse,
             sources: [],
             confidence: 0.5,
             factualBasis: 'low',
-            generatedContent: [initialAnswer],
-            disclaimer: 'No current data available - general guidance provided'
+            generatedContent: [],
+            disclaimer: 'No current data available - suggested questions provided'
           };
         }
       } else {
@@ -380,7 +384,7 @@ export class RetrievalAugmentedGeneration {
     let response = `**${query}**\n\n`;
 
     response += isHindi ?
-      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
+      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपन��� सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
       '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n';
 
     response += isHindi ? '📝 **आप ये सवाल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
@@ -392,7 +396,7 @@ export class RetrievalAugmentedGeneration {
       response += `• 🐛 "${location} में कपास के लिए कीट चेतावनी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
       response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
-      response += `• 💡 "${location} में इस मौसम में कौन सी फसल लगाएं?"`;
+      response += `• 💡 "${location} में इस मौसम में कौन सी ���सल लगाएं?"`;
     } else {
       response += `• 🌦 "Weather forecast for ${location} for next 5 days"\n`;
       response += `• 💰 "Wheat and rice mandi prices in ${location}"\n`;
@@ -419,7 +423,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Case 2: General guidance with suggestions
       fallbackAdvice += isHindi ?
-        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n���� **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
+        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सि��चाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
         '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
     }
 
@@ -507,7 +511,7 @@ RESPONSE:`;
     const isHindi = language === 'hi';
 
     const instructions = isHindi ?
-      'नीचे दिए गए वर्तम���न डे���ा के साथ अपनी सलाह को अपडेट करें।' :
+      'नीचे दिए गए वर्तमान डे���ा के साथ अपनी सलाह को अपडेट करें।' :
       'Update your advice with the current data provided below.';
 
     return `${instructions}
