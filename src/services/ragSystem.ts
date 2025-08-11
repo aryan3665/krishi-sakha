@@ -294,7 +294,7 @@ export class RetrievalAugmentedGeneration {
         formattedAnswer += `\n⚠️ ${marketData.missingDataNote}\n`;
       }
 
-      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${marketSource?.source} (${marketSource?.freshness || 'fresh'})*\n\n`;
+      formattedAnswer += `**${isHindi ? 'स्रोत' : 'Source'}: ${marketSource?.source} (${marketSource?.freshness || 'fresh'})**\n\n`;
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
@@ -313,7 +313,7 @@ export class RetrievalAugmentedGeneration {
           formattedAnswer += `��� ${rec}\n`;
         });
       }
-      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${soilSource?.source} (${soilSource?.freshness || 'fresh'})*\n\n`;
+      formattedAnswer += `**${isHindi ? 'स्रोत' : 'Source'}: ${soilSource?.source} (${soilSource?.freshness || 'fresh'})**\n\n`;
     }
 
     // Advisory Section
@@ -323,7 +323,7 @@ export class RetrievalAugmentedGeneration {
       advisoryData.advisories.slice(0, 2).forEach((adv: any) => {
         formattedAnswer += `• **${adv.title}**: ${adv.content}\n`;
       });
-      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${advisorySource?.source} (${advisorySource?.freshness || 'fresh'})*\n\n`;
+      formattedAnswer += `**${isHindi ? 'स्रोत' : 'Source'}: ${advisorySource?.source} (${advisorySource?.freshness || 'fresh'})**\n\n`;
     }
 
     // Scheme Section
@@ -333,7 +333,7 @@ export class RetrievalAugmentedGeneration {
       schemeData.schemes.slice(0, 2).forEach((scheme: any) => {
         formattedAnswer += `• **${scheme.name}**: ${scheme.benefit}\n`;
       });
-      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${schemeSource?.source} (${schemeSource?.freshness || 'fresh'})*\n\n`;
+      formattedAnswer += `**${isHindi ? 'स्रोत' : 'Source'}: ${schemeSource?.source} (${schemeSource?.freshness || 'fresh'})**\n\n`;
     }
 
     // General tips
@@ -390,7 +390,7 @@ export class RetrievalAugmentedGeneration {
     let response = `**${query}**\n\n`;
 
     response += isHindi ?
-      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देन�� के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
+      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देन�� के लिए पर्या��्त विश्वसनीय डेटा नहीं है।\n\n' :
       '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n';
 
     response += isHindi ? '📝 **आप ये सवाल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
@@ -405,7 +405,7 @@ export class RetrievalAugmentedGeneration {
       response += `• 💡 "${location} में इस मौसम में कौन सी फसल लगाएं?"`;
     } else {
       response += `• 🌦 "Weather forecast for ${location} for next 5 days"\n`;
-      response += `• 💰 "Wheat and rice mandi prices in ${location}"\n`;
+      response += `• ���� "Wheat and rice mandi prices in ${location}"\n`;
       response += `• 🐛 "Pest alerts for cotton in ${location}"\n`;
       response += `• 📜 "Government schemes for farmers in ${location}"\n`;
       response += `• 🌱 "How to get soil testing done in ${location}?"\n`;
@@ -424,12 +424,12 @@ export class RetrievalAugmentedGeneration {
     if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
       // Case 1: Cannot understand query or system down
       fallbackAdvice += isHindi ?
-        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पंजाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम क���सा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पंजाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
         '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
     } else {
       // Case 2: General guidance with suggestions
       fallbackAdvice += isHindi ?
-        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के ल��ए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
+        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के ल��ए पूछें:**\n• "���ेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
         '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
     }
 
