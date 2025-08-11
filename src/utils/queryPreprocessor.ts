@@ -111,7 +111,7 @@ const transliterateHinglishWords = (text: string): string => {
     'keet': 'कीट',
     'kisan': 'किसान',
     'fasal': 'फसल',
-    'mitti': 'म���ट्टी',
+    'mitti': 'मिट्टी',
     'zameen': 'ज़मीन',
     'gaay': 'गाय',
     'bhains': 'भैंस',
@@ -206,48 +206,96 @@ const extractLocation = (text: string): LocationInfo | undefined => {
 
 const extractCrop = (text: string): CropInfo | undefined => {
   const words = text.toLowerCase().split(/\s+/);
+  const originalText = text;
 
-  // Check for common crops
+  // First check for Hindi crop names
+  for (const [hindiName, englishName] of Object.entries(CROP_TRANSLATIONS)) {
+    if (text.includes(hindiName) || words.some(word => word.includes(hindiName.toLowerCase()))) {
+      return createCropInfo(englishName, originalText);
+    }
+  }
+
+  // Then check for English crops with better matching
   for (const crop of COMMON_CROPS) {
     const cropLower = crop.toLowerCase();
-    if (words.some(word => word.includes(cropLower) || cropLower.includes(word))) {
-      // Determine season based on crop and current month
-      const currentMonth = new Date().getMonth();
-      let season: 'kharif' | 'rabi' | 'zaid' | 'perennial' = 'perennial';
+    const cropWords = cropLower.split(' ');
 
-      if (['rice', 'maize', 'cotton', 'sugarcane', 'bajra', 'jowar'].includes(cropLower)) {
-        season = currentMonth >= 5 && currentMonth <= 9 ? 'kharif' : 'rabi';
-      } else if (['wheat', 'gram', 'mustard', 'barley'].includes(cropLower)) {
-        season = 'rabi';
-      } else if (['sunflower', 'maize'].includes(cropLower) && currentMonth >= 2 && currentMonth <= 5) {
-        season = 'zaid';
+    // Exact match first
+    if (words.includes(cropLower)) {
+      return createCropInfo(crop, originalText);
+    }
+
+    // Partial match - check if all words of crop name are present
+    if (cropWords.length > 1) {
+      const allWordsPresent = cropWords.every(cropWord =>
+        words.some(word => word.includes(cropWord) || cropWord.includes(word))
+      );
+      if (allWordsPresent) {
+        return createCropInfo(crop, originalText);
       }
-
-      // Extract growth stage if mentioned
-      const stagePatterns = {
-        'sowing': /sow|seed|plant|बुआई|बीज/i,
-        'growing': /grow|growth|विकास/i,
-        'flowering': /flower|bloom|फूल/i,
-        'harvesting': /harvest|cut|कटाई/i
-      };
-
-      let stage: 'sowing' | 'growing' | 'flowering' | 'harvesting' | undefined;
-      for (const [stageName, pattern] of Object.entries(stagePatterns)) {
-        if (pattern.test(text)) {
-          stage = stageName as any;
-          break;
-        }
+    } else {
+      // Single word crop - check for partial matches
+      if (words.some(word => {
+        // Exact match
+        if (word === cropLower) return true;
+        // Word contains crop name (minimum 3 chars)
+        if (cropLower.length >= 3 && word.includes(cropLower)) return true;
+        // Crop name contains word (minimum 3 chars)
+        if (word.length >= 3 && cropLower.includes(word)) return true;
+        return false;
+      })) {
+        return createCropInfo(crop, originalText);
       }
-
-      return {
-        name: crop,
-        season,
-        stage
-      };
     }
   }
 
   return undefined;
+};
+
+const createCropInfo = (cropName: string, originalText: string): CropInfo => {
+  // Determine season based on crop and current month
+  const currentMonth = new Date().getMonth();
+  const cropLower = cropName.toLowerCase();
+  let season: 'kharif' | 'rabi' | 'zaid' | 'perennial' = 'perennial';
+
+  // Kharif crops (June-October)
+  if (['rice', 'maize', 'cotton', 'sugarcane', 'bajra', 'jowar', 'soybean', 'groundnut'].includes(cropLower)) {
+    season = currentMonth >= 5 && currentMonth <= 9 ? 'kharif' : 'rabi';
+  }
+  // Rabi crops (November-April)
+  else if (['wheat', 'gram', 'mustard', 'barley', 'pea', 'lentil'].includes(cropLower)) {
+    season = 'rabi';
+  }
+  // Zaid crops (March-June)
+  else if (['sunflower', 'cucumber', 'watermelon'].includes(cropLower) && currentMonth >= 2 && currentMonth <= 5) {
+    season = 'zaid';
+  }
+  // Vegetables are generally perennial or seasonal
+  else if (['onion', 'potato', 'tomato', 'brinjal', 'okra', 'cabbage', 'cauliflower', 'carrot'].includes(cropLower)) {
+    season = 'perennial'; // Most vegetables can be grown year-round with proper care
+  }
+
+  // Extract growth stage if mentioned
+  const stagePatterns = {
+    'sowing': /sow|seed|plant|बुआई|बीज|plantation/i,
+    'growing': /grow|growth|विकास|development/i,
+    'flowering': /flower|bloom|फूल|flowering/i,
+    'harvesting': /harvest|cut|कटाई|reap/i
+  };
+
+  let stage: 'sowing' | 'growing' | 'flowering' | 'harvesting' | undefined;
+  for (const [stageName, pattern] of Object.entries(stagePatterns)) {
+    if (pattern.test(originalText)) {
+      stage = stageName as any;
+      break;
+    }
+  }
+
+  return {
+    name: cropName,
+    season,
+    stage
+  };
 };
 
 const classifyQuery = (text: string): string[] => {
