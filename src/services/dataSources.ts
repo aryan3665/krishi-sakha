@@ -125,8 +125,35 @@ export const INDIAN_STATES = [
 ];
 
 export const COMMON_CROPS = [
-  'Rice', 'Wheat', 'Maize', 'Sugarcane', 'Cotton', 'Jute', 'Tea', 'Coffee',
-  'Tobacco', 'Coconut', 'Groundnut', 'Mustard', 'Sunflower', 'Soybean',
-  'Bajra', 'Jowar', 'Ragi', 'Barley', 'Pulses', 'Gram', 'Lentil', 'Pea',
-  'Onion', 'Potato', 'Tomato', 'Chilli', 'Turmeric', 'Ginger', 'Garlic'
+  // Cereals
+  'Rice', 'Wheat', 'Maize', 'Bajra', 'Jowar', 'Ragi', 'Barley',
+  // Cash crops
+  'Sugarcane', 'Cotton', 'Jute', 'Tea', 'Coffee', 'Tobacco',
+  // Oilseeds
+  'Groundnut', 'Mustard', 'Sunflower', 'Soybean', 'Sesame', 'Safflower',
+  // Pulses
+  'Gram', 'Lentil', 'Pea', 'Black gram', 'Green gram', 'Arhar', 'Moong', 'Urad', 'Chana',
+  // Vegetables
+  'Onion', 'Potato', 'Tomato', 'Chilli', 'Brinjal', 'Okra', 'Cabbage', 'Cauliflower',
+  'Carrot', 'Radish', 'Beetroot', 'Cucumber', 'Bottle gourd', 'Ridge gourd', 'Bitter gourd',
+  'Pumpkin', 'Bean', 'Spinach', 'Coriander', 'Mint', 'Capsicum', 'Lady finger',
+  // Spices
+  'Turmeric', 'Ginger', 'Garlic', 'Cumin', 'Fenugreek', 'Cardamom', 'Black pepper',
+  // Fruits
+  'Coconut', 'Mango', 'Banana', 'Apple', 'Orange', 'Grapes', 'Pomegranate'
 ];
+
+// Hindi-English crop mappings for better extraction
+export const CROP_TRANSLATIONS: { [key: string]: string } = {
+  // Hindi to English
+  'धान': 'Rice', 'चावल': 'Rice', 'गेहूं': 'Wheat', 'मक्का': 'Maize',
+  'गन्ना': 'Sugarcane', 'कपास': 'Cotton', 'सोयाबीन': 'Soybean',
+  'प्य��ज': 'Onion', 'आलू': 'Potato', 'टमाटर': 'Tomato',
+  'बैंगन': 'Brinjal', 'भिंडी': 'Okra', 'गोभी': 'Cauliflower',
+  'गाजर': 'Carrot', 'मूली': 'Radish', 'खीरा': 'Cucumber',
+  'लौकी': 'Bottle gourd', 'तुरई': 'Ridge gourd', 'करेला': 'Bitter gourd',
+  'हल्दी': 'Turmeric', 'अदरक': 'Ginger', 'लहसुन': 'Garlic',
+  'मिर्च': 'Chilli', 'धनिया': 'Coriander', 'पुदीना': 'Mint',
+  // Common variations
+  'आम': 'Mango', 'केला': 'Banana', 'संतरा': 'Orange', 'अंगूर': 'Grapes'
+};
