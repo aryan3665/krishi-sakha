@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Sprout, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, Sprout, AlertCircle, CheckCircle, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AuthDebugger } from './AuthDebugger';
 
 export const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
