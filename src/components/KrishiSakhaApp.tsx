@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { QueryInput } from "./QueryInput";
 import { AdviceCard } from "./AdviceCard";
+import { EnhancedAdviceCard } from "./EnhancedAdviceCard";
+import { OfflineStatus } from "./OfflineStatus";
+import { DemoController } from "./DemoController";
+import { DemoModeHandler } from "./DemoModeHandler";
+import { SystemHealthIndicator } from "./SystemHealthIndicator";
+import { SystemStatus } from "./SystemStatus";
+import { SourceReference } from "@/services/ragSystem";
+import { systemHealthChecker } from "@/services/systemHealth";
 import { QueryHistory } from "./QueryHistory";
 import { BottomNavigation } from "./BottomNavigation";
 import { LanguageSelector } from "./LanguageSelector";
@@ -27,6 +35,11 @@ export const KrishiSakhaApp = () => {
     advice: string;
     explanation: string;
     source: string;
+    sources?: SourceReference[];
+    confidence?: number;
+    factualBasis?: 'high' | 'medium' | 'low';
+    generatedContent?: string[];
+    disclaimer?: string;
   } | null>(null);
   const { user, signOut } = useAuth();
   const { queries, loading, submitQuery, deleteQuery } = useQueries();
@@ -35,16 +48,43 @@ export const KrishiSakhaApp = () => {
   // Generate advice and store in database
   const generateAdvice = async (query: string) => {
     try {
+      // STEP 1: Run health check before processing
+      const healthStatus = await systemHealthChecker.checkSystemHealth();
+      console.log('🔍 System health check:', healthStatus.overall);
+
+      // STEP 2: Process the query regardless of health status
       const result = await submitQuery(query, language);
       if (result) {
         setCurrentAdvice({
           advice: result.advice,
           explanation: result.explanation || "",
-          source: "Krishi Sakha AI"
+          source: "Krishi Sakha AI",
+          sources: result.sources || [],
+          confidence: result.confidence || 0.5,
+          factualBasis: result.factual_basis || 'medium',
+          generatedContent: [],
+          disclaimer: result.explanation?.includes('factual basis') ? result.explanation : undefined
         });
       }
     } catch (error) {
       console.error('Error generating advice:', error);
+
+      // NEVER block - provide fallback guidance
+      const isHindi = language === 'hi';
+      const fallbackAdvice = `**${query}**\n\n` + (isHindi ?
+        `🌾 **आपातकालीन कृषि सलाह**\n\n💡 **तत्काल सुझाव:**\n• मिट्टी की जांच नियमित रूप से कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि विशेषज्ञ से सलाह लें\n• उचित सिंचाई और पोषण का ध्यान रखें\n\n📞 **सहायता:** किसान कॉल सेंटर 1800-180-1551\n\n⚠️ **नोट:** सिस्टम में अस्थायी समस्या है। कृपया बाद में पुनः प्रयास करें।` :
+        `🌾 **Emergency Agricultural Guidance**\n\n💡 **Immediate Suggestions:**\n• Test your soil regularly for nutrients\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Ensure proper irrigation and nutrition\n\n📞 **Support:** Kisan Call Center 1800-180-1551\n\n⚠️ **Note:** System experiencing temporary issues. Please try again later.`);
+
+      setCurrentAdvice({
+        advice: fallbackAdvice,
+        explanation: "Emergency guidance due to system error",
+        source: "Krishi Sakha AI (Fallback Mode)",
+        sources: [],
+        confidence: 0.3,
+        factualBasis: 'low',
+        generatedContent: ['Emergency fallback guidance'],
+        disclaimer: "This is basic guidance due to system issues. Normal service will resume shortly."
+      });
     }
   };
 
@@ -96,13 +136,37 @@ export const KrishiSakhaApp = () => {
               </div>
             )}
 
+            {/* System status for non-healthy systems */}
+            <SystemStatus language={language} compact={false} />
+
             {/* Query input - positioned lower */}
             <div className="glass-card p-6 rounded-2xl mb-8">
               <QueryInput onSubmit={generateAdvice} language={language} isLoading={loading} />
             </div>
 
             {/* Current advice */}
-            {currentAdvice && <AdviceCard advice={currentAdvice.advice} explanation={currentAdvice.explanation} source={currentAdvice.source} language={language} onTranslate={handleTranslate} />}
+            {currentAdvice && (
+              currentAdvice.sources && currentAdvice.sources.length > 0 ? (
+                <EnhancedAdviceCard
+                  advice={currentAdvice.advice}
+                  sources={currentAdvice.sources}
+                  confidence={currentAdvice.confidence || 0.5}
+                  factualBasis={currentAdvice.factualBasis || 'medium'}
+                  generatedContent={currentAdvice.generatedContent || []}
+                  disclaimer={currentAdvice.disclaimer}
+                  language={language}
+                  onTranslate={handleTranslate}
+                />
+              ) : (
+                <AdviceCard
+                  advice={currentAdvice.advice}
+                  explanation={currentAdvice.explanation}
+                  source={currentAdvice.source}
+                  language={language}
+                  onTranslate={handleTranslate}
+                />
+              )
+            )}
 
             {/* Recent activity */}
             {queries.length > 0 && <div className="glass-card p-6 rounded-2xl shadow-soft">
@@ -236,6 +300,31 @@ export const KrishiSakhaApp = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Offline Status Card */}
+            <OfflineStatus />
+          </div>;
+      case "demo":
+        return <div className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <div className="text-2xl">🧪</div>
+              {getStringTranslation(language, 'demo') || 'Demo & Testing'}
+            </h2>
+            <DemoModeHandler
+              onRunExample={generateAdvice}
+              isLoading={loading}
+              language={language}
+            />
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                <div className="text-xl">⚙️</div>
+                Advanced Testing
+              </h3>
+              <DemoController
+                onRunScenario={generateAdvice}
+                isLoading={loading}
+              />
+            </div>
           </div>;
       default:
         return null;
@@ -251,8 +340,9 @@ export const KrishiSakhaApp = () => {
               <div className="absolute inset-0 h-6 w-6 text-accent opacity-50 animate-ping"></div>
             </div>
             <span className="font-semibold gradient-earth bg-clip-text text-transparent">Krishi Sakha</span>
+            <SystemHealthIndicator />
           </div>
-          
+
           <div className="flex items-center gap-2">
             {/* User Profile Display */}
             {user && (

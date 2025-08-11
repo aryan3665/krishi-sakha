@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { preprocessQuery } from '@/utils/queryPreprocessor';
+import { ragSystem, RAGResponse } from '@/services/ragSystem';
 
 export interface Query {
   id: string;
@@ -14,6 +15,9 @@ export interface Query {
   advice: string;
   explanation: string | null;
   created_at: string;
+  sources?: any[];
+  confidence?: number;
+  factual_basis?: 'high' | 'medium' | 'low';
 }
 
 export const useQueries = () => {
@@ -22,35 +26,25 @@ export const useQueries = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const generateAdviceWithAI = async (cleanedText: string, detectedLanguage: string | null, language: string): Promise<{ advice: string; explanation: string }> => {
+  const generateAdviceWithRAG = async (queryText: string, language: string): Promise<RAGResponse> => {
     try {
-      const { data, error } = await supabase.functions.invoke('generate-advice', {
-        body: {
-          cleaned_query_text: cleanedText,
-          detected_language: detectedLanguage,
-          language: language
-        }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to generate advice');
-      }
-
-      if (!data || !data.advice) {
-        throw new Error('Invalid response from AI service');
-      }
-
-      return {
-        advice: data.advice,
-        explanation: data.explanation || 'AI-generated farming advice based on your query.'
-      };
+      return await ragSystem.generateAdvice(queryText, language);
     } catch (error) {
-      console.error('Error calling AI service:', error);
-      // Fallback to basic advice
+      console.error('Error calling RAG system:', error);
+
+      // Enhanced fallback response that's always helpful
+      const isHindi = language === 'hi';
+      const fallbackAnswer = isHindi ?
+        `🌾 **कृषि सलाह** (सिस्टम त्रुटि के कारण सामान्य सुझाव)\n\n💡 **तत्काल सुझाव:**\n• अपनी मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि विशेषज्ञ से संपर्क करें\n• उ��ित सिंचाई और उर्वरक का प्रयोग करें\n\n📞 **सहायता:**\n• किसान कॉल सेंटर: 1800-180-1551\n• निकटतम कृषि केंद्र से मिलें\n\n⚠️ **नोट:** यह सामान्य सलाह है। विस्तृत जानकारी के लिए इंटरनेट कनेक्शन की जांच करें।` :
+        `🌾 **Agricultural Advisory** (General guidance due to system error)\n\n💡 **Immediate Suggestions:**\n• Test your soil regularly for nutrients\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📞 **Support:**\n• Kisan Call Center: 1800-180-1551\n• Visit nearest Krishi Vigyan Kendra\n\n⚠️ **Note:** This is general advice. Check internet connection for detailed, data-driven guidance.`;
+
       return {
-        advice: "For best results, consider your local soil conditions, climate, and crop variety. Consult with local agricultural experts for specific guidance.",
-        explanation: "Unable to generate AI advice at this time. Please try again later."
+        answer: `**${queryText}**\n\n${fallbackAnswer}`,
+        sources: [],
+        confidence: 0.4,
+        factualBasis: 'low',
+        generatedContent: ['General agricultural guidance'],
+        disclaimer: "System temporarily unavailable - showing general farming guidance"
       };
     }
   };
@@ -85,58 +79,101 @@ export const useQueries = () => {
     if (!user) return;
     
     setLoading(true);
-    try {
-      // Preprocess the query
-      const processed = preprocessQuery(queryText);
-      
-      // Validate the processed query
-      if (!processed.isValid) {
-        toast({
-          title: "Invalid Query",
-          description: processed.error || "Please enter a valid farming question.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
+
+    // STEP 1: ALWAYS generate the AI response first (never block this)
+    const ragResponse = await generateAdviceWithRAG(queryText, language);
+
+    // STEP 2: Process the query for storage
+    const processed = preprocessQuery(queryText);
+
+    // STEP 3: Create response object
+    const responseData = {
+      id: `temp_${Date.now()}`,
+      user_id: user.id,
+      query_text: processed.cleanedText || queryText,
+      original_query_text: processed.originalText || queryText,
+      detected_language: processed.detectedLanguage || language,
+      language,
+      advice: ragResponse.answer,
+      explanation: ragResponse.disclaimer || `🌾 AI-generated advice with ${ragResponse.factualBasis} factual basis (${(ragResponse.confidence * 100).toFixed(0)}% confidence)`,
+      created_at: new Date().toISOString(),
+      sources: ragResponse.sources,
+      confidence: ragResponse.confidence,
+      factual_basis: ragResponse.factualBasis
+    };
+
+    // STEP 4: Try to save to database with retries (but never block the response)
+    let savedToDatabase = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    const attemptSave = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('queries')
+          .insert([{
+            user_id: user.id,
+            query_text: processed.cleanedText || queryText,
+            original_query_text: processed.originalText || queryText,
+            detected_language: processed.detectedLanguage || language,
+            language,
+            advice: ragResponse.answer,
+            explanation: responseData.explanation
+          }])
+          .select()
+          .single();
+
+        if (!error && data) {
+          savedToDatabase = true;
+          responseData.id = data.id; // Update with real ID
+          setQueries(prev => [data, ...prev.slice(0, 9)]);
+          console.log('✅ Query saved to database successfully');
+          return data;
+        } else {
+          throw error;
+        }
+      } catch (err) {
+        console.warn(`⚠️ Database save attempt ${retryCount + 1} failed:`, err);
+        retryCount++;
+
+        if (retryCount < maxRetries) {
+          // Retry after a short delay
+          setTimeout(attemptSave, 1000 * retryCount);
+        } else {
+          console.error('❌ All database save attempts failed');
+        }
       }
+    };
 
-      const { advice, explanation } = await generateAdviceWithAI(processed.cleanedText, processed.detectedLanguage, language);
-      
-      const { data, error } = await supabase
-        .from('queries')
-        .insert([{
-          user_id: user.id,
-          query_text: processed.cleanedText,
-          original_query_text: processed.originalText,
-          detected_language: processed.detectedLanguage,
-          language,
-          advice,
-          explanation
-        }])
-        .select()
-        .single();
+    // Start save attempts in background (non-blocking)
+    attemptSave();
 
-      if (error) throw error;
-      
-      setQueries(prev => [data, ...prev.slice(0, 9)]);
-      
+    // STEP 5: Show response immediately with appropriate message
+    if (processed.isValid !== false) {
       toast({
-        title: "Query submitted",
-        description: "Your agricultural query has been processed successfully!",
+        title: "🌾 Your farming advice is ready!",
+        description: "AI has processed your question successfully.",
       });
-      
-      return data;
-    } catch (error) {
-      console.error('Error submitting query:', error);
+    } else {
       toast({
-        title: "Error",
-        description: "Failed to submit query. Please try again.",
-        variant: "destructive",
+        title: "🌾 Advice generated",
+        description: "Your question has been processed with basic formatting.",
       });
-      throw error;
-    } finally {
-      setLoading(false);
     }
+
+    // Check save status after a short delay and show note if needed
+    setTimeout(() => {
+      if (!savedToDatabase) {
+        toast({
+          title: "⚠️ Unable to save to history right now",
+          description: "Your advice is still shown below. Retrying quietly...",
+          variant: "default",
+        });
+      }
+    }, 2000);
+
+    setLoading(false);
+    return responseData;
   };
 
   const deleteQuery = async (queryId: string) => {

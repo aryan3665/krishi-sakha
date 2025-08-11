@@ -48,27 +48,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      console.log('Attempting to sign in with email:', email);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Supabase sign in error:', error);
+      } else {
+        console.log('Sign in successful:', data);
+      }
+
+      return { error };
+    } catch (err) {
+      console.error('Unexpected sign in error:', err);
+      return { error: err };
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      console.log('Attempting to sign up with email:', email, 'redirectUrl:', redirectUrl);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName
+          }
         }
+      });
+
+      if (error) {
+        console.error('Supabase sign up error:', error);
+      } else {
+        console.log('Sign up successful:', data);
       }
-    });
-    return { error };
+
+      return { error };
+    } catch (err) {
+      console.error('Unexpected sign up error:', err);
+      return { error: err };
+    }
   };
 
   const signOut = async () => {
@@ -76,15 +102,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      console.log('Attempting Google OAuth with redirectUrl:', redirectUrl);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl
+        }
+      });
+
+      if (error) {
+        console.error('Supabase Google OAuth error:', error);
+      } else {
+        console.log('Google OAuth initiated:', data);
       }
-    });
-    return { error };
+
+      return { error };
+    } catch (err) {
+      console.error('Unexpected Google OAuth error:', err);
+      return { error: err };
+    }
   };
 
   const value = {

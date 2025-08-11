@@ -1,108 +1,182 @@
-import { useState, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Mic, MicOff } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-// Extend Window interface for speech recognition
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
+import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Mic, MicOff, Volume2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface VoiceInputProps {
-  onTranscript: (text: string) => void;
+  onVoiceResult: (text: string) => void;
   language: string;
+  isListening: boolean;
+  setIsListening: (listening: boolean) => void;
 }
 
-export const VoiceInput = ({ onTranscript, language }: VoiceInputProps) => {
-  const [isListening, setIsListening] = useState(false);
+export const VoiceInput = ({ onVoiceResult, language, isListening, setIsListening }: VoiceInputProps) => {
+  const [isSupported, setIsSupported] = useState(true);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   const recognitionRef = useRef<any>(null);
   const { toast } = useToast();
 
-  const startListening = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+  useEffect(() => {
+    // Check if speech recognition is supported
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setIsSupported(false);
+      return;
+    }
+
+    // Initialize speech recognition
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    
+    // Set language based on user preference
+    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+
+    recognition.onstart = () => {
+      console.log('Voice recognition started');
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      console.log('Voice recognition result:', transcript);
+      
+      if (transcript.trim()) {
+        onVoiceResult(transcript);
+        toast({
+          title: "🎤 Voice input received",
+          description: `"${transcript.substring(0, 50)}${transcript.length > 50 ? '...' : ''}"`,
+        });
+      }
+      setIsListening(false);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Voice recognition error:', event.error);
+      setIsListening(false);
+      
+      let errorMessage = "🎤 Voice input did not work. Please check microphone permissions or try typing your question instead.";
+      
+      switch (event.error) {
+        case 'no-speech':
+          errorMessage = "🎤 No speech detected. Please try speaking again or type your question.";
+          break;
+        case 'audio-capture':
+          errorMessage = "🎤 Microphone not accessible. Please check permissions or type your question.";
+          break;
+        case 'not-allowed':
+          setPermissionDenied(true);
+          errorMessage = "🎤 Microphone permission denied. Please enable microphone access or type your question.";
+          break;
+        case 'network':
+          errorMessage = "🎤 Network error during voice recognition. Please try typing your question.";
+          break;
+        case 'aborted':
+          return; // Don't show error for user-initiated abort
+        default:
+          errorMessage = "🎤 Voice input failed. Please try typing your question instead.";
+      }
+      
       toast({
-        title: "Voice input not supported",
-        description: "Your browser doesn't support voice recognition",
-        variant: "destructive",
+        title: "Voice Input Issue",
+        description: errorMessage,
+        variant: "default",
+      });
+    };
+
+    recognition.onend = () => {
+      console.log('Voice recognition ended');
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognition) {
+        recognition.abort();
+      }
+    };
+  }, [language, onVoiceResult, setIsListening, toast]);
+
+  const startListening = async () => {
+    if (!isSupported) {
+      toast({
+        title: "Voice Input Not Supported",
+        description: "🎤 Voice input is not supported in this browser. Please type your question instead.",
+        variant: "default",
       });
       return;
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = getLanguageCode(language);
-
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0])
-        .map(result => result.transcript)
-        .join('');
-
-      if (event.results[event.results.length - 1].isFinal) {
-        onTranscript(transcript);
-      }
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      setIsListening(false);
+    if (permissionDenied) {
       toast({
-        title: "Voice input error",
-        description: "Please try again or check your microphone",
-        variant: "destructive",
+        title: "Microphone Permission Required",
+        description: "🎤 Please enable microphone permissions in your browser settings to use voice input.",
+        variant: "default",
       });
-    };
+      return;
+    }
 
-    recognitionRef.current = recognition;
-    recognition.start();
-  };
-
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
+    try {
+      // Check microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop()); // Stop the stream immediately
+      
+      setIsListening(true);
+      recognitionRef.current?.start();
+      
+      toast({
+        title: "🎤 Listening...",
+        description: language === 'hi' ? 
+          "अपना कृषि प्रश्न बोलें" : 
+          "Speak your farming question now",
+      });
+    } catch (error) {
+      console.error('Microphone access error:', error);
+      setPermissionDenied(true);
+      toast({
+        title: "Microphone Access Denied",
+        description: "🎤 Please enable microphone permissions or type your question instead.",
+        variant: "default",
+      });
     }
   };
 
-  const getLanguageCode = (lang: string) => {
-    const langMap: Record<string, string> = {
-      'en': 'en-IN',
-      'hi': 'hi-IN',
-      'mr': 'mr-IN',
-      'bn': 'bn-IN',
-      'ta': 'ta-IN',
-      'te': 'te-IN',
-      'gu': 'gu-IN',
-      'pa': 'pa-IN',
-    };
-    return langMap[lang] || 'en-IN';
+  const stopListening = () => {
+    setIsListening(false);
+    recognitionRef.current?.abort();
   };
+
+  if (!isSupported) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled
+        className="opacity-50"
+        title="Voice input not supported in this browser"
+      >
+        <MicOff className="h-4 w-4" />
+      </Button>
+    );
+  }
 
   return (
     <Button
       variant={isListening ? "default" : "outline"}
       size="sm"
       onClick={isListening ? stopListening : startListening}
-      className={`touch-target transition-smooth ${isListening ? 'shadow-glow' : ''}`}
-      aria-label={isListening ? "Stop voice input" : "Start voice input"}
+      className={isListening ? "bg-red-500 hover:bg-red-600 animate-pulse" : ""}
+      title={isListening ? "Click to stop listening" : "Click to use voice input"}
     >
       {isListening ? (
-        <MicOff className="h-4 w-4" />
+        <>
+          <Volume2 className="h-4 w-4 animate-pulse" />
+          <span className="ml-1 text-xs">Listening...</span>
+        </>
       ) : (
-        <Mic className="h-4 w-4" />
+        <Mic className={`h-4 w-4 ${permissionDenied ? 'text-gray-400' : ''}`} />
       )}
     </Button>
   );

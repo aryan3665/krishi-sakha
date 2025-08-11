@@ -1,75 +1,214 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Sprout } from 'lucide-react';
+import { Loader2, Sprout, AlertCircle, CheckCircle, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthDebugger } from './AuthDebugger';
 
 export const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [showDebugger, setShowDebugger] = useState(false);
   const { signIn, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Test Supabase connection
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Supabase connection error:', error);
+          setConnectionStatus('error');
+        } else {
+          console.log('Supabase connected successfully');
+          setConnectionStatus('connected');
+        }
+      } catch (err) {
+        console.error('Supabase connection test failed:', err);
+        setConnectionStatus('error');
+      }
+    };
+
+    testConnection();
+  }, []);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    const { error } = await signIn(email, password);
-    
-    if (error) {
+
+    if (!email || !password) {
       toast({
-        title: "Sign in failed",
-        description: error.message,
+        title: "Validation Error",
+        description: "Please enter both email and password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await signIn(email, password);
+
+      if (error) {
+        console.error('Sign in error:', error);
+        toast({
+          title: "Sign in failed",
+          description: error.message || "Failed to sign in. Please check your credentials.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Signed in successfully!",
+        });
+      }
+    } catch (err) {
+      console.error('Unexpected sign in error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    const { error } = await signUp(email, password, fullName);
-    
-    if (error) {
+
+    if (!email || !password || !fullName) {
       toast({
-        title: "Sign up failed",
-        description: error.message,
+        title: "Validation Error",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
-    } else {
+      return;
+    }
+
+    if (password.length < 6) {
       toast({
-        title: "Sign up successful",
-        description: "Please check your email to confirm your account.",
+        title: "Validation Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await signUp(email, password, fullName);
+
+      if (error) {
+        console.error('Sign up error:', error);
+        let errorMessage = error.message || "Failed to create account.";
+
+        // Provide specific guidance for common email issues
+        if (error.message?.includes('email')) {
+          errorMessage = "Email service not configured. Click 'Debug' below for SMTP setup instructions.";
+        } else if (error.message?.includes('User already registered')) {
+          errorMessage = "This email is already registered. Try signing in instead.";
+        }
+
+        toast({
+          title: "Sign up failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Account created successfully!",
+          description: "Check your email for a confirmation link. If no email arrives, check the Debug section below.",
+        });
+        // Clear form on success
+        setEmail('');
+        setPassword('');
+        setFullName('');
+      }
+    } catch (err) {
+      console.error('Unexpected sign up error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    const { error } = await signInWithGoogle();
-    
-    if (error) {
+
+    try {
+      const { error } = await signInWithGoogle();
+
+      if (error) {
+        console.error('Google sign in error:', error);
+        let errorMessage = error.message;
+        let title = "Google sign in failed";
+
+        // Provide more specific error messages
+        if (error.message?.includes('popup')) {
+          errorMessage = "Popup was blocked. Please allow popups and try again.";
+        } else if (error.message?.includes('OAuth')) {
+          errorMessage = "Google OAuth is not configured. Click 'Debug' below for setup instructions.";
+        } else if (error.message?.includes('refused to connect')) {
+          title = "Google OAuth Configuration Error";
+          errorMessage = "The redirect URL is not authorized. Click 'Debug' below to fix this.";
+        } else if (error.message?.includes('access_denied')) {
+          errorMessage = "Access denied. Please try again or use email/password.";
+        } else {
+          errorMessage = `${error.message}. Click 'Debug' for configuration help.`;
+        }
+
+        toast({
+          title,
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+      // Note: Success handling is automatic via auth state change
+    } catch (err) {
+      console.error('Unexpected Google sign in error:', err);
       toast({
-        title: "Google sign in failed",
-        description: error.message,
+        title: "Error",
+        description: "Failed to initiate Google sign-in. Please try again or use email/password.",
         variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
+
+  // Show debugger if requested
+  if (showDebugger) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
+        <div className="w-full max-w-4xl space-y-4">
+          <Button
+            variant="outline"
+            onClick={() => setShowDebugger(false)}
+            className="mb-4"
+          >
+            ← Back to Login
+          </Button>
+          <AuthDebugger />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
@@ -84,6 +223,28 @@ export const AuthForm = () => {
           <CardDescription className="text-green-600">
             Your trusted agricultural advisor
           </CardDescription>
+
+          {/* Connection Status */}
+          <div className="flex items-center justify-center space-x-2 mt-2">
+            {connectionStatus === 'checking' && (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                <span className="text-xs text-gray-500">Connecting...</span>
+              </>
+            )}
+            {connectionStatus === 'connected' && (
+              <>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-xs text-green-600">Connected</span>
+              </>
+            )}
+            {connectionStatus === 'error' && (
+              <>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span className="text-xs text-red-600">Connection Error</span>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -119,7 +280,7 @@ export const AuthForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || connectionStatus !== 'connected'}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign In
@@ -165,7 +326,7 @@ export const AuthForm = () => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || connectionStatus !== 'connected'}
                 >
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign Up
@@ -190,11 +351,43 @@ export const AuthForm = () => {
               variant="outline"
               className="w-full mt-4"
               onClick={handleGoogleSignIn}
-              disabled={isLoading}
+              disabled={isLoading || connectionStatus !== 'connected'}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in with Google
             </Button>
+          </div>
+
+          {/* Debug and Help Options */}
+          <div className="mt-4 space-y-2">
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDebugger(true)}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <Settings className="h-4 w-4 mr-1" />
+                Debug Authentication Issues
+              </Button>
+            </div>
+
+            {connectionStatus === 'error' && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-800 text-center">
+                  ⚠️ Authentication service unavailable. Please check configuration.
+                </p>
+              </div>
+            )}
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-xs text-yellow-800 text-center">
+                <strong>Known Issues:</strong><br />
+                • Google OAuth: Configure redirect URLs<br />
+                • Email signup: Configure SMTP settings<br />
+                • Click "Debug" above for detailed fixes
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

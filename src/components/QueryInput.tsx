@@ -14,6 +14,7 @@ interface QueryInputProps {
 export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) => {
   const [query, setQuery] = useState("");
   const [currentDemo, setCurrentDemo] = useState(0);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,8 +43,15 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
     }
   };
 
-  const handleVoiceTranscript = (transcript: string) => {
+  const handleVoiceResult = (transcript: string) => {
     setQuery(transcript);
+    // Auto-submit voice queries for better UX
+    if (transcript.trim() && !isLoading) {
+      setTimeout(() => {
+        onSubmit(transcript.trim());
+        setQuery("");
+      }, 500); // Small delay to show the text before submitting
+    }
   };
 
   return (
@@ -71,12 +79,27 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
               )}
             </Button>
           </div>
-          <VoiceInput onTranscript={handleVoiceTranscript} language={language} />
+          <VoiceInput
+            onVoiceResult={handleVoiceResult}
+            language={language}
+            isListening={isListening}
+            setIsListening={setIsListening}
+          />
         </div>
       </form>
-      <p className="text-sm text-muted-foreground text-center px-4 font-medium">
-        {getStringTranslation(language, 'askInAnyLanguage')}
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-sm text-muted-foreground px-4 font-medium">
+          {getStringTranslation(language, 'askInAnyLanguage')}
+        </p>
+        {isListening && (
+          <p className="text-xs text-blue-600 animate-pulse">
+            {language === 'hi' ?
+              '🎤 सुन रहा है... अपना कृषि प्रश्न बोलें' :
+              '🎤 Listening... Speak your farming question'
+            }
+          </p>
+        )}
+      </div>
     </div>
   );
 };
