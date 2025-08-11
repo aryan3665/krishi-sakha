@@ -43,8 +43,15 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
     }
   };
 
-  const handleVoiceTranscript = (transcript: string) => {
+  const handleVoiceResult = (transcript: string) => {
     setQuery(transcript);
+    // Auto-submit voice queries for better UX
+    if (transcript.trim() && !isLoading) {
+      setTimeout(() => {
+        onSubmit(transcript.trim());
+        setQuery("");
+      }, 500); // Small delay to show the text before submitting
+    }
   };
 
   return (
