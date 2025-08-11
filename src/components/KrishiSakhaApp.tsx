@@ -3,6 +3,7 @@ import { QueryInput } from "./QueryInput";
 import { AdviceCard } from "./AdviceCard";
 import { EnhancedAdviceCard } from "./EnhancedAdviceCard";
 import { OfflineStatus } from "./OfflineStatus";
+import { DemoController } from "./DemoController";
 import { SourceReference } from "@/services/ragSystem";
 import { QueryHistory } from "./QueryHistory";
 import { BottomNavigation } from "./BottomNavigation";
