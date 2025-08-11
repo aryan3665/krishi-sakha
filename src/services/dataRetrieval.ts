@@ -450,32 +450,67 @@ export class DataRetrievalAgent {
   async retrieveAllRelevantData(context: QueryContext): Promise<RetrievedData[]> {
     const results: RetrievedData[] = [];
 
-    if (context.location) {
-      // Always get weather data
-      const weatherData = await this.retrieveWeatherData(context.location);
-      results.push(...weatherData);
+    // Use default location if none provided
+    const location = context.location || { state: 'General', district: 'General' };
 
-      // Get market data if crop is specified or if query is about prices
-      if (context.crop || context.queryType.includes('market') || context.queryType.includes('price')) {
-        const marketData = await this.retrieveMarketData(context.location, context.crop);
+    try {
+      // **ALWAYS ATTEMPT ALL DATA SOURCES** - as per requirements
+      console.log('🔍 Attempting to retrieve data from all sources...');
+
+      // 1. Always get weather data
+      try {
+        const weatherData = await this.retrieveWeatherData(location);
+        results.push(...weatherData);
+        console.log('✅ Weather data retrieved');
+      } catch (error) {
+        console.warn('⚠️ Weather data failed:', error);
+      }
+
+      // 2. Always get market data (essential for price queries)
+      try {
+        const marketData = await this.retrieveMarketData(location, context.crop);
         results.push(...marketData);
+        console.log('✅ Market data retrieved');
+      } catch (error) {
+        console.warn('⚠️ Market data failed:', error);
       }
 
-      // Get advisory data
-      const advisoryData = await this.retrieveAdvisoryData(context.location, context.crop);
-      results.push(...advisoryData);
-
-      // Get soil data if query is about soil or fertilizers
-      if (context.queryType.includes('soil') || context.queryType.includes('fertilizer')) {
-        const soilData = await this.retrieveSoilData(context.location);
-        results.push(...soilData);
+      // 3. Always get advisory data
+      try {
+        const advisoryData = await this.retrieveAdvisoryData(location, context.crop);
+        results.push(...advisoryData);
+        console.log('✅ Advisory data retrieved');
+      } catch (error) {
+        console.warn('⚠️ Advisory data failed:', error);
       }
 
-      // Get scheme data if query is about government schemes or subsidies
-      if (context.queryType.includes('scheme') || context.queryType.includes('subsidy')) {
-        const schemeData = await this.retrieveSchemeData(context.location);
-        results.push(...schemeData);
+      // 4. Get soil data (prioritize if query is about soil/fertilizers)
+      if (context.queryType.includes('soil') || context.queryType.includes('fertilizer') ||
+          context.queryType.includes('general')) {
+        try {
+          const soilData = await this.retrieveSoilData(location);
+          results.push(...soilData);
+          console.log('✅ Soil data retrieved');
+        } catch (error) {
+          console.warn('⚠️ Soil data failed:', error);
+        }
       }
+
+      // 5. Get scheme data (prioritize if query is about schemes/subsidies)
+      if (context.queryType.includes('scheme') || context.queryType.includes('subsidy') ||
+          context.queryType.includes('general')) {
+        try {
+          const schemeData = await this.retrieveSchemeData(location);
+          results.push(...schemeData);
+          console.log('✅ Scheme data retrieved');
+        } catch (error) {
+          console.warn('⚠️ Scheme data failed:', error);
+        }
+      }
+
+      console.log(`📊 Total data sources retrieved: ${results.length}`);
+    } catch (error) {
+      console.error('❌ Error in retrieveAllRelevantData:', error);
     }
 
     return results;
