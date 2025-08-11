@@ -118,10 +118,7 @@ export const useQueries = () => {
             detected_language: processed.detectedLanguage || language,
             language,
             advice: ragResponse.answer,
-            explanation: responseData.explanation,
-            sources: ragResponse.sources,
-            confidence: ragResponse.confidence,
-            factual_basis: ragResponse.factualBasis
+            explanation: responseData.explanation
           }])
           .select()
           .single();
