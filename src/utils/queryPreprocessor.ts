@@ -1,4 +1,6 @@
-// Simple query preprocessing without external dependencies
+// Enhanced query preprocessing with agricultural context extraction
+
+import { LocationInfo, CropInfo, QueryContext, INDIAN_STATES, COMMON_CROPS } from '../services/dataSources';
 
 export interface ProcessedQuery {
   originalText: string;
@@ -6,6 +8,7 @@ export interface ProcessedQuery {
   detectedLanguage: string;
   isValid: boolean;
   error?: string;
+  extractedContext: QueryContext;
 }
 
 const agricultureTerms = {
