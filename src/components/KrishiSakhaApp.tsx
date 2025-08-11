@@ -29,6 +29,11 @@ export const KrishiSakhaApp = () => {
     advice: string;
     explanation: string;
     source: string;
+    sources?: SourceReference[];
+    confidence?: number;
+    factualBasis?: 'high' | 'medium' | 'low';
+    generatedContent?: string[];
+    disclaimer?: string;
   } | null>(null);
   const { user, signOut } = useAuth();
   const { queries, loading, submitQuery, deleteQuery } = useQueries();
