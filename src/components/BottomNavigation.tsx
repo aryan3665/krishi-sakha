@@ -32,7 +32,7 @@ export const BottomNavigation = ({ activeTab, onTabChange, language }: BottomNav
               variant="ghost"
               size="sm"
               onClick={() => onTabChange(item.id)}
-              className={`flex flex-col items-center gap-1 h-auto py-2 px-3 touch-target transition-smooth rounded-xl ${
+              className={`flex flex-col items-center gap-1 h-auto py-2 px-2 touch-target transition-smooth rounded-xl ${
                 isActive ? 'bg-primary text-primary-foreground shadow-soft' : 'text-muted-foreground hover:text-foreground'
               }`}
               aria-label={item.label}
