@@ -136,6 +136,9 @@ export const KrishiSakhaApp = () => {
               </div>
             )}
 
+            {/* System status for non-healthy systems */}
+            <SystemStatus language={language} compact={false} />
+
             {/* Query input - positioned lower */}
             <div className="glass-card p-6 rounded-2xl mb-8">
               <QueryInput onSubmit={generateAdvice} language={language} isLoading={loading} />
