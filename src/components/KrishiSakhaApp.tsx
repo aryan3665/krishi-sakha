@@ -275,6 +275,17 @@ export const KrishiSakhaApp = () => {
             {/* Offline Status Card */}
             <OfflineStatus />
           </div>;
+      case "demo":
+        return <div className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <div className="text-2xl">🧪</div>
+              Demo & Testing
+            </h2>
+            <DemoController
+              onRunScenario={generateAdvice}
+              isLoading={loading}
+            />
+          </div>;
       default:
         return null;
     }
