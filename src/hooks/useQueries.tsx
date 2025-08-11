@@ -26,35 +26,19 @@ export const useQueries = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const generateAdviceWithAI = async (cleanedText: string, detectedLanguage: string | null, language: string): Promise<{ advice: string; explanation: string }> => {
+  const generateAdviceWithRAG = async (queryText: string, language: string): Promise<RAGResponse> => {
     try {
-      const { data, error } = await supabase.functions.invoke('generate-advice', {
-        body: {
-          cleaned_query_text: cleanedText,
-          detected_language: detectedLanguage,
-          language: language
-        }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to generate advice');
-      }
-
-      if (!data || !data.advice) {
-        throw new Error('Invalid response from AI service');
-      }
-
-      return {
-        advice: data.advice,
-        explanation: data.explanation || 'AI-generated farming advice based on your query.'
-      };
+      return await ragSystem.generateAdvice(queryText, language);
     } catch (error) {
-      console.error('Error calling AI service:', error);
-      // Fallback to basic advice
+      console.error('Error calling RAG system:', error);
+      // Fallback response
       return {
-        advice: "For best results, consider your local soil conditions, climate, and crop variety. Consult with local agricultural experts for specific guidance.",
-        explanation: "Unable to generate AI advice at this time. Please try again later."
+        answer: "For best results, consider your local soil conditions, climate, and crop variety. Consult with local agricultural experts for specific guidance.",
+        sources: [],
+        confidence: 0.3,
+        factualBasis: 'low',
+        generatedContent: ['Fallback response due to system error'],
+        disclaimer: "Unable to access current data. Please try again later."
       };
     }
   };
