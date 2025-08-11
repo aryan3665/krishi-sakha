@@ -155,6 +155,63 @@ export const DEMO_SCENARIOS: TestScenario[] = [
     category: 'multi-domain'
   },
 
+  // Missing Data Handling Scenarios
+  {
+    id: 'missing_en_1',
+    title: 'Unavailable Vegetable Prices (English)',
+    description: 'Test transparent missing data handling for vegetables',
+    query: 'Show me potato prices in Punjab',
+    language: 'en',
+    expectedDataSources: ['market'],
+    expectedTopics: ['market', 'price'],
+    difficulty: 'simple',
+    category: 'market'
+  },
+  {
+    id: 'missing_en_2',
+    title: 'Specialty Crop Query (English)',
+    description: 'Test handling of uncommon crop price requests',
+    query: 'What are lettuce farming rates in Kerala?',
+    language: 'en',
+    expectedDataSources: ['market'],
+    expectedTopics: ['market', 'price'],
+    difficulty: 'simple',
+    category: 'market'
+  },
+  {
+    id: 'missing_hi_1',
+    title: 'Unavailable Crop Data (Hindi)',
+    description: 'Test Hindi missing data transparency',
+    query: 'महाराष्ट्र में टमाटर के भाव क्या हैं?',
+    language: 'hi',
+    expectedDataSources: ['market'],
+    expectedTopics: ['market', 'price'],
+    difficulty: 'simple',
+    category: 'market'
+  },
+  {
+    id: 'missing_en_3',
+    title: 'Insufficient Context Query (English)',
+    description: 'Test suggested questions for vague queries',
+    query: 'Tell me about farming',
+    language: 'en',
+    expectedDataSources: [],
+    expectedTopics: ['general'],
+    difficulty: 'simple',
+    category: 'advisory'
+  },
+  {
+    id: 'missing_hi_2',
+    title: 'General Help Request (Hindi)',
+    description: 'Test Hindi suggested questions generation',
+    query: 'मुझे खेती की मदद चाहिए',
+    language: 'hi',
+    expectedDataSources: [],
+    expectedTopics: ['general'],
+    difficulty: 'simple',
+    category: 'advisory'
+  },
+
   // Edge Cases and Challenging Queries
   {
     id: 'edge_en_1',
