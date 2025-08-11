@@ -50,7 +50,7 @@ export class RetrievalAugmentedGeneration {
       if (!offlineCache.isOnline()) {
         const offlineResponse = offlineCache.getOfflineFallback(query, language);
         if (offlineResponse) {
-          return this.formatFarmerFriendlyResponse(offlineResponse, offlineResponse.sources, language);
+          return this.formatFarmerFriendlyResponse(offlineResponse, offlineResponse.sources, language, query);
         }
 
         // Return basic offline response if no cache available
@@ -278,7 +278,7 @@ export class RetrievalAugmentedGeneration {
     const isHindi = language === 'hi';
 
     const fallbackAdvice = isHindi ?
-      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अन��पलब्ध'}` :
+      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
       `🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n⚠️ ${reason === 'Invalid query format' ? 'Please ask a clear farming question' : 'Live data temporarily unavailable'}`;
 
     return {
