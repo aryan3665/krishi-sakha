@@ -270,6 +270,9 @@ export const KrishiSakhaApp = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Offline Status Card */}
+            <OfflineStatus />
           </div>;
       default:
         return null;
