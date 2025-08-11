@@ -14,6 +14,7 @@ interface QueryInputProps {
 export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) => {
   const [query, setQuery] = useState("");
   const [currentDemo, setCurrentDemo] = useState(0);
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
