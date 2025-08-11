@@ -81,12 +81,16 @@ export const preprocessQuery = (query: string): ProcessedQuery => {
   // Step 6: Validation
   const isValid = cleanedText.length >= 3 && /[a-zA-Z\u0900-\u097F\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/.test(cleanedText);
 
+  // Step 7: Extract agricultural context
+  const extractedContext = extractQueryContext(cleanedText, detectedLanguage);
+
   return {
     originalText,
     cleanedText,
     detectedLanguage,
     isValid,
-    error: !isValid ? 'Please enter a valid farming question (minimum 3 characters with letters)' : undefined
+    error: !isValid ? 'Please enter a valid farming question (minimum 3 characters with letters)' : undefined,
+    extractedContext
   };
 };
 
