@@ -277,10 +277,11 @@ export class RetrievalAugmentedGeneration {
     }
 
     // Market Section - Enhanced with transparent missing data handling
-    if (marketData) {
-      const marketSource = sources.find(s => s.type === 'market');
-      formattedAnswer += isHindi ? '💰 **बाजार भाव:**\n' : '💰 **Market Prices:**\n';
+    // ALWAYS SHOW MARKET SECTION - as per requirements
+    const marketSource = sources.find(s => s.type === 'market');
+    formattedAnswer += isHindi ? '💰 **बाजार भाव:**\n' : '💰 **Market Prices:**\n';
 
+    if (marketData) {
       // Show available price data
       if (marketData.prices && marketData.prices.length > 0) {
         marketData.prices.slice(0, 3).forEach((price: any) => {
@@ -294,6 +295,11 @@ export class RetrievalAugmentedGeneration {
       }
 
       formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${marketSource?.source} (${marketSource?.freshness || 'fresh'})*\n\n`;
+    } else {
+      // Even if no market data retrieved, show section with missing data note
+      formattedAnswer += isHindi ?
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोतों से संपर्क करें।\n\n' :
+        '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
     // Soil Section
@@ -304,7 +310,7 @@ export class RetrievalAugmentedGeneration {
       formattedAnswer += `• pH: ${soilData.pH}\n`;
       if (soilData.recommendations) {
         soilData.recommendations.slice(0, 2).forEach((rec: string) => {
-          formattedAnswer += `• ${rec}\n`;
+          formattedAnswer += `��� ${rec}\n`;
         });
       }
       formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${soilSource?.source} (${soilSource?.freshness || 'fresh'})*\n\n`;
@@ -384,7 +390,7 @@ export class RetrievalAugmentedGeneration {
     let response = `**${query}**\n\n`;
 
     response += isHindi ?
-      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपन��� सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
+      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
       '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n';
 
     response += isHindi ? '📝 **आप ये सवाल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
@@ -396,7 +402,7 @@ export class RetrievalAugmentedGeneration {
       response += `• 🐛 "${location} में कपास के लिए कीट चेतावनी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
       response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
-      response += `• 💡 "${location} में इस मौसम में कौन सी ���सल लगाएं?"`;
+      response += `• 💡 "${location} में इस मौसम में कौन सी फसल लगाएं?"`;
     } else {
       response += `• 🌦 "Weather forecast for ${location} for next 5 days"\n`;
       response += `• 💰 "Wheat and rice mandi prices in ${location}"\n`;
@@ -423,7 +429,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Case 2: General guidance with suggestions
       fallbackAdvice += isHindi ?
-        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सि��चाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
+        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
         '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
     }
 
@@ -488,7 +494,7 @@ RESPONSE:`;
     const crop = context.crop?.name || 'general farming';
 
     const instructions = isHindi ?
-      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें।' :
+      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें���' :
       'You are an agricultural expert. Provide advice based on general agricultural knowledge only.';
 
     return `${instructions}
