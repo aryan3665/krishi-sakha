@@ -88,8 +88,8 @@ export const useQueries = () => {
         return;
       }
 
-      const { advice, explanation } = await generateAdviceWithAI(processed.cleanedText, processed.detectedLanguage, language);
-      
+      const ragResponse = await generateAdviceWithRAG(queryText, language);
+
       const { data, error } = await supabase
         .from('queries')
         .insert([{
@@ -98,8 +98,11 @@ export const useQueries = () => {
           original_query_text: processed.originalText,
           detected_language: processed.detectedLanguage,
           language,
-          advice,
-          explanation
+          advice: ragResponse.answer,
+          explanation: ragResponse.disclaimer || `AI-generated advice with ${ragResponse.factualBasis} factual basis (${(ragResponse.confidence * 100).toFixed(0)}% confidence)`,
+          sources: ragResponse.sources,
+          confidence: ragResponse.confidence,
+          factual_basis: ragResponse.factualBasis
         }])
         .select()
         .single();
