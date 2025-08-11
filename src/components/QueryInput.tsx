@@ -79,7 +79,12 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
               )}
             </Button>
           </div>
-          <VoiceInput onTranscript={handleVoiceTranscript} language={language} />
+          <VoiceInput
+            onVoiceResult={handleVoiceResult}
+            language={language}
+            isListening={isListening}
+            setIsListening={setIsListening}
+          />
         </div>
       </form>
       <p className="text-sm text-muted-foreground text-center px-4 font-medium">
