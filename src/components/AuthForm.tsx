@@ -61,23 +61,56 @@ export const AuthForm = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    
-    const { error } = await signUp(email, password, fullName);
-    
-    if (error) {
+
+    if (!email || !password || !fullName) {
       toast({
-        title: "Sign up failed",
-        description: error.message,
+        title: "Validation Error",
+        description: "Please fill in all fields",
         variant: "destructive",
       });
-    } else {
+      return;
+    }
+
+    if (password.length < 6) {
       toast({
-        title: "Sign up successful",
-        description: "Please check your email to confirm your account.",
+        title: "Validation Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { error } = await signUp(email, password, fullName);
+
+      if (error) {
+        console.error('Sign up error:', error);
+        toast({
+          title: "Sign up failed",
+          description: error.message || "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Account created successfully!",
+          description: "Please check your email and click the confirmation link to activate your account.",
+        });
+        // Clear form on success
+        setEmail('');
+        setPassword('');
+        setFullName('');
+      }
+    } catch (err) {
+      console.error('Unexpected sign up error:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
 
