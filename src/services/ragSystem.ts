@@ -292,7 +292,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोतों से संपर्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संपर्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -354,7 +354,7 @@ export class RetrievalAugmentedGeneration {
     if (isHindi) {
       section += `• आपके प्रश्न का विश्लेषण करके विषय और स्थान की पहचान की गई\n`;
       section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
-      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प्राप्त ह���ई\n`;
+      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प्राप्त हुई\n`;
       section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
       section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
@@ -376,6 +376,16 @@ export class RetrievalAugmentedGeneration {
     return section;
   }
 
+  private formatDirectLLMResponse(llmAnswer: string, originalQuery: string, language: string): string {
+    // Format LLM response with query heading and simple structure
+    let formattedAnswer = `**${originalQuery}**\n\n`;
+
+    // Add the LLM response directly
+    formattedAnswer += llmAnswer;
+
+    return formattedAnswer;
+  }
+
   private generateSuggestedQuestionsResponse(query: string, language: string, context: QueryContext): string {
     const isHindi = language === 'hi';
     const location = context.location ? `${context.location.district}, ${context.location.state}` : (isHindi ? 'आपका क्षेत्र' : 'your region');
@@ -391,7 +401,7 @@ export class RetrievalAugmentedGeneration {
 
     // Generate location-specific suggestions
     if (isHindi) {
-      response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा ���हेगा?"\n`;
+      response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा रहेगा?"\n`;
       response += `• 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
       response += `• 🐛 "${location} में कपास के लिए कीट चेतावनी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
@@ -424,7 +434,7 @@ export class RetrievalAugmentedGeneration {
       // Case 2: General guidance with suggestions
       fallbackAdvice += isHindi ?
         '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के ल��ए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
-        '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n��� "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
+        '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
     }
 
     return {
@@ -460,7 +470,7 @@ export class RetrievalAugmentedGeneration {
     const crop = context.crop?.name || 'crops';
 
     const instructions = isHindi ?
-      'आप एक कृषि विशेषज्ञ हैं। किसान को सरल और स्पष्ट सलाह दें। इमोजी का उपयोग करें।' :
+      'आप एक कृषि विशेषज्ञ हैं। किसान को सरल और स���पष्ट सलाह दें। इमोजी का उपयोग करें।' :
       'You are an agricultural expert. Provide clear, simple advice to farmers. Use emojis for visual appeal.';
 
     return `${instructions}
