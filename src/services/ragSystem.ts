@@ -194,7 +194,7 @@ export class RetrievalAugmentedGeneration {
     return issues.length > 0 ? `⚠️ ${issues.join(', ')} - Using available data` : undefined;
   }
 
-  private formatFarmerFriendlyResponse(response: RAGResponse, sources: SourceReference[], language: string): RAGResponse {
+  private formatFarmerFriendlyResponse(response: RAGResponse, sources: SourceReference[], language: string, originalQuery?: string): RAGResponse {
     const isHindi = language === 'hi';
 
     // Extract data by type for structured formatting
@@ -204,7 +204,12 @@ export class RetrievalAugmentedGeneration {
     const advisoryData = sources.find(s => s.type === 'advisory')?.data;
     const schemeData = sources.find(s => s.type === 'scheme')?.data;
 
-    let formattedAnswer = isHindi ? '🌾 कृषि सलाह\n\n' : '🌾 Agricultural Advisory\n\n';
+    // Start with the query as bold heading
+    let formattedAnswer = '';
+    if (originalQuery) {
+      formattedAnswer += `**${originalQuery}**\n\n`;
+    }
+    formattedAnswer += isHindi ? '🌾 कृषि सलाह\n\n' : '🌾 Agricultural Advisory\n\n';
 
     // Weather Section
     if (weatherData) {
@@ -228,7 +233,7 @@ export class RetrievalAugmentedGeneration {
 
     // Soil Section
     if (soilData) {
-      formattedAnswer += isHindi ? '🌱 **मिट्टी और उर���वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
+      formattedAnswer += isHindi ? '🌱 **मिट्टी और उर्वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
       formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रकार' : 'Soil Type'}: ${soilData.soilType}\n`;
       formattedAnswer += `• pH: ${soilData.pH}\n`;
       if (soilData.recommendations) {
@@ -273,7 +278,7 @@ export class RetrievalAugmentedGeneration {
     const isHindi = language === 'hi';
 
     const fallbackAdvice = isHindi ?
-      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
+      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
       `🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n⚠️ ${reason === 'Invalid query format' ? 'Please ask a clear farming question' : 'Live data temporarily unavailable'}`;
 
     return {
@@ -321,7 +326,7 @@ CROP: ${crop}
 ${factualContext}
 
 RESPONSE FORMAT:
-- Use emojis (🌦 🌱 💰 📋 💡)
+- Use emojis (🌦 🌱 💰 ��� 💡)
 - Keep language simple and farmer-friendly
 - Structure with clear sections
 - Highlight key information with **bold**
