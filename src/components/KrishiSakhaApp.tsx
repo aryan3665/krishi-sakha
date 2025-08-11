@@ -4,6 +4,7 @@ import { AdviceCard } from "./AdviceCard";
 import { EnhancedAdviceCard } from "./EnhancedAdviceCard";
 import { OfflineStatus } from "./OfflineStatus";
 import { DemoController } from "./DemoController";
+import { DemoModeHandler } from "./DemoModeHandler";
 import { SourceReference } from "@/services/ragSystem";
 import { QueryHistory } from "./QueryHistory";
 import { BottomNavigation } from "./BottomNavigation";
