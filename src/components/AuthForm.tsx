@@ -116,16 +116,37 @@ export const AuthForm = () => {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    const { error } = await signInWithGoogle();
-    
-    if (error) {
+
+    try {
+      const { error } = await signInWithGoogle();
+
+      if (error) {
+        console.error('Google sign in error:', error);
+        let errorMessage = error.message;
+
+        // Provide more specific error messages
+        if (error.message?.includes('popup')) {
+          errorMessage = "Popup was blocked. Please allow popups and try again.";
+        } else if (error.message?.includes('OAuth')) {
+          errorMessage = "Google sign-in is not properly configured. Please try email/password instead.";
+        }
+
+        toast({
+          title: "Google sign in failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+      // Note: Success handling is automatic via auth state change
+    } catch (err) {
+      console.error('Unexpected Google sign in error:', err);
       toast({
-        title: "Google sign in failed",
-        description: error.message,
+        title: "Error",
+        description: "Failed to initiate Google sign-in. Please try again or use email/password.",
         variant: "destructive",
       });
     }
-    
+
     setIsLoading(false);
   };
 
