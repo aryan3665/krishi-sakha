@@ -11,6 +11,7 @@ interface BottomNavigationProps {
 const getNavItems = (language: string) => [
   { id: "home", label: getStringTranslation(language, 'home'), icon: Home },
   { id: "history", label: getStringTranslation(language, 'history'), icon: History },
+  { id: "demo", label: "Demo", icon: TestTube },
   { id: "help", label: getStringTranslation(language, 'help'), icon: HelpCircle },
   { id: "settings", label: getStringTranslation(language, 'settings'), icon: Settings },
 ];
