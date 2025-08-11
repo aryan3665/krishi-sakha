@@ -186,6 +186,28 @@ export const AuthForm = () => {
           <CardDescription className="text-green-600">
             Your trusted agricultural advisor
           </CardDescription>
+
+          {/* Connection Status */}
+          <div className="flex items-center justify-center space-x-2 mt-2">
+            {connectionStatus === 'checking' && (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                <span className="text-xs text-gray-500">Connecting...</span>
+              </>
+            )}
+            {connectionStatus === 'connected' && (
+              <>
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <span className="text-xs text-green-600">Connected</span>
+              </>
+            )}
+            {connectionStatus === 'error' && (
+              <>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span className="text-xs text-red-600">Connection Error</span>
+              </>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
