@@ -25,6 +25,27 @@ export interface SourceReference {
 export class RetrievalAugmentedGeneration {
   async generateAdvice(query: string, language: string): Promise<RAGResponse> {
     try {
+      // Check for cached response first
+      const cached = offlineCache.getCachedResponse(query, language);
+      if (cached) {
+        console.log('Using cached response');
+        return {
+          ...cached.response,
+          disclaimer: `Cached response from ${cached.timestamp.toLocaleDateString()}. ${cached.response.disclaimer || ''}`
+        };
+      }
+
+      // Check if online for fresh data
+      if (!offlineCache.isOnline()) {
+        const offlineResponse = offlineCache.getOfflineFallback(query, language);
+        if (offlineResponse) {
+          return offlineResponse;
+        }
+
+        // Return basic offline response if no cache available
+        return this.getBasicOfflineResponse(query, language);
+      }
+
       // Step 1: Preprocess and extract context
       const processed = preprocessQuery(query);
       if (!processed.isValid) {
@@ -33,21 +54,21 @@ export class RetrievalAugmentedGeneration {
 
       // Step 2: Retrieve relevant data
       const retrievedData = await dataAgent.retrieveAllRelevantData(processed.extractedContext);
-      
+
       // Step 3: Create source references
       const sources = this.createSourceReferences(retrievedData);
-      
+
       // Step 4: Build factual context for LLM
       const factualContext = this.buildFactualContext(retrievedData, processed.extractedContext);
-      
+
       // Step 5: Generate grounded response
       const llmPrompt = this.constructPrompt(processed.cleanedText, factualContext, language);
       const answer = await this.callLLM(llmPrompt);
-      
+
       // Step 6: Analyze and classify response
       const analysis = this.analyzeResponse(answer, sources);
-      
-      return {
+
+      const response: RAGResponse = {
         answer: analysis.answer,
         sources,
         confidence: analysis.confidence,
@@ -55,10 +76,32 @@ export class RetrievalAugmentedGeneration {
         generatedContent: analysis.generatedContent,
         disclaimer: analysis.disclaimer
       };
+
+      // Cache the response for offline use
+      offlineCache.cacheResponse(
+        query,
+        language,
+        response,
+        processed.extractedContext.location ? {
+          state: processed.extractedContext.location.state,
+          district: processed.extractedContext.location.district
+        } : undefined
+      );
+
+      return response;
     } catch (error) {
       console.error('RAG generation error:', error);
+
+      // Try offline fallback on error
+      if (!offlineCache.isOnline()) {
+        const offlineResponse = offlineCache.getOfflineFallback(query, language);
+        if (offlineResponse) {
+          return offlineResponse;
+        }
+      }
+
       return {
-        answer: 'I apologize, but I encountered an error while processing your query. Please try again.',
+        answer: 'I apologize, but I encountered an error while processing your query. Please try again when you have a stable internet connection.',
         sources: [],
         confidence: 0,
         factualBasis: 'low',
@@ -66,6 +109,21 @@ export class RetrievalAugmentedGeneration {
         disclaimer: 'This response could not be verified against current data sources.'
       };
     }
+  }
+
+  private getBasicOfflineResponse(query: string, language: string): RAGResponse {
+    const basicAdvice = language === 'hi' ?
+      'इंटरनेट कनेक्शन नहीं है। कृपया स्थानीय कृषि विशेषज्ञ से सलाह लें।' :
+      'No internet connection available. Please consult with local agricultural experts for specific advice based on your soil, climate, and crop conditions.';
+
+    return {
+      answer: basicAdvice,
+      sources: [],
+      confidence: 0.3,
+      factualBasis: 'low',
+      generatedContent: ['General offline advice'],
+      disclaimer: 'This is a basic offline response. Connect to internet for detailed, data-driven advice.'
+    };
   }
 
   private createSourceReferences(retrievedData: RetrievedData[]): SourceReference[] {
