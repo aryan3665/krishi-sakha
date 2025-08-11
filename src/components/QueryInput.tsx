@@ -87,9 +87,19 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
           />
         </div>
       </form>
-      <p className="text-sm text-muted-foreground text-center px-4 font-medium">
-        {getStringTranslation(language, 'askInAnyLanguage')}
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-sm text-muted-foreground px-4 font-medium">
+          {getStringTranslation(language, 'askInAnyLanguage')}
+        </p>
+        {isListening && (
+          <p className="text-xs text-blue-600 animate-pulse">
+            {language === 'hi' ?
+              '🎤 सुन रहा है... अपना कृषि प्रश्न बोलें' :
+              '🎤 Listening... Speak your farming question'
+            }
+          </p>
+        )}
+      </div>
     </div>
   );
 };
