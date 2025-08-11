@@ -143,3 +143,136 @@ const correctAgricultureTerms = (text: string): string => {
   }
   return corrected;
 };
+
+const extractQueryContext = (text: string, language: string): QueryContext => {
+  const context: QueryContext = {
+    queryType: [],
+    language,
+    timestamp: new Date()
+  };
+
+  // Extract location information
+  context.location = extractLocation(text);
+
+  // Extract crop information
+  context.crop = extractCrop(text);
+
+  // Classify query type
+  context.queryType = classifyQuery(text);
+
+  return context;
+};
+
+const extractLocation = (text: string): LocationInfo | undefined => {
+  const words = text.toLowerCase().split(/\s+/);
+
+  // Check for Indian states
+  for (const state of INDIAN_STATES) {
+    const stateLower = state.toLowerCase();
+    if (words.some(word => word.includes(stateLower) || stateLower.includes(word))) {
+      return { state, district: 'General' };
+    }
+  }
+
+  // Check for common district patterns
+  const districtPatterns = [
+    /in\s+(\w+)\s+district/i,
+    /(\w+)\s+district/i,
+    /from\s+(\w+)/i
+  ];
+
+  for (const pattern of districtPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return {
+        state: 'General',
+        district: match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase()
+      };
+    }
+  }
+
+  // Check for pin code patterns
+  const pinMatch = text.match(/\b\d{6}\b/);
+  if (pinMatch) {
+    return {
+      state: 'General',
+      district: 'General',
+      pincode: pinMatch[0]
+    };
+  }
+
+  return undefined;
+};
+
+const extractCrop = (text: string): CropInfo | undefined => {
+  const words = text.toLowerCase().split(/\s+/);
+
+  // Check for common crops
+  for (const crop of COMMON_CROPS) {
+    const cropLower = crop.toLowerCase();
+    if (words.some(word => word.includes(cropLower) || cropLower.includes(word))) {
+      // Determine season based on crop and current month
+      const currentMonth = new Date().getMonth();
+      let season: 'kharif' | 'rabi' | 'zaid' | 'perennial' = 'perennial';
+
+      if (['rice', 'maize', 'cotton', 'sugarcane', 'bajra', 'jowar'].includes(cropLower)) {
+        season = currentMonth >= 5 && currentMonth <= 9 ? 'kharif' : 'rabi';
+      } else if (['wheat', 'gram', 'mustard', 'barley'].includes(cropLower)) {
+        season = 'rabi';
+      } else if (['sunflower', 'maize'].includes(cropLower) && currentMonth >= 2 && currentMonth <= 5) {
+        season = 'zaid';
+      }
+
+      // Extract growth stage if mentioned
+      const stagePatterns = {
+        'sowing': /sow|seed|plant|बुआई|बीज/i,
+        'growing': /grow|growth|विकास/i,
+        'flowering': /flower|bloom|फूल/i,
+        'harvesting': /harvest|cut|कटाई/i
+      };
+
+      let stage: 'sowing' | 'growing' | 'flowering' | 'harvesting' | undefined;
+      for (const [stageName, pattern] of Object.entries(stagePatterns)) {
+        if (pattern.test(text)) {
+          stage = stageName as any;
+          break;
+        }
+      }
+
+      return {
+        name: crop,
+        season,
+        stage
+      };
+    }
+  }
+
+  return undefined;
+};
+
+const classifyQuery = (text: string): string[] => {
+  const queryTypes: string[] = [];
+
+  const patterns = {
+    weather: /weather|temperature|rain|humidity|wind|climate|मौसम|बारिश|तापमान/i,
+    market: /price|market|sell|buy|mandi|rate|cost|दाम|मार्केट|मंडी|कीमत/i,
+    advisory: /advice|recommend|suggest|problem|disease|pest|सलाह|सुझाव|बीमारी|कीट/i,
+    soil: /soil|fertility|nutrient|ph|organic|मिट्टी|उर्वरता|पोषक/i,
+    fertilizer: /fertilizer|manure|compost|urea|npk|खाद|उर्वरक/i,
+    irrigation: /water|irrigation|drip|sprinkler|पानी|सिंचाई/i,
+    scheme: /scheme|subsidy|government|yojana|योजना|सब्सिडी|सरकार/i,
+    general: /how|what|when|where|कैसे|क्या|कब|कहाँ/i
+  };
+
+  for (const [type, pattern] of Object.entries(patterns)) {
+    if (pattern.test(text)) {
+      queryTypes.push(type);
+    }
+  }
+
+  if (queryTypes.length === 0) {
+    queryTypes.push('general');
+  }
+
+  return queryTypes;
+};
