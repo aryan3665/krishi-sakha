@@ -94,11 +94,21 @@ export class DataRetrievalAgent {
           const relatedCrops = this.getRelatedCrops(crop.name, cropType);
           availableCrops.push(...relatedCrops.slice(0, 2));
         } else {
-          // Requested crop data not available - note this
+          // Requested crop data not available - note this with transparent message
           missingDataNote = `Market price data for ${crop.name.toLowerCase()} in ${location.district}, ${location.state} is currently unavailable. Please check back later or consult local mandi sources.`;
 
-          // Show alternative major crops instead
-          availableCrops = ['Rice', 'Wheat', 'Maize'];
+          // Show alternative crops based on category - more relevant than just major crops
+          const cropType = this.getCropCategory(crop.name);
+          if (cropType === 'vegetables') {
+            availableCrops = ['Onion', 'Potato', 'Tomato']; // Common vegetables
+          } else if (cropType === 'pulses') {
+            availableCrops = ['Gram', 'Lentil', 'Moong'];
+          } else if (cropType === 'oilseeds') {
+            availableCrops = ['Groundnut', 'Mustard', 'Sunflower'];
+          } else {
+            // Default to major staples
+            availableCrops = ['Rice', 'Wheat', 'Maize'];
+          }
         }
       } else {
         // General query - show major crops
