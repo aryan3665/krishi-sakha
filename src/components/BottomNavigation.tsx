@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, History, HelpCircle, Settings } from "lucide-react";
+import { Home, History, HelpCircle, Settings, TestTube } from "lucide-react";
 import { getStringTranslation } from "@/utils/translations";
 
 interface BottomNavigationProps {
