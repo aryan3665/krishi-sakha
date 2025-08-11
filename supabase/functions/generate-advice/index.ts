@@ -10,69 +10,7 @@ interface GenerateAdviceRequest {
   cleaned_query_text: string;
   detected_language?: string;
   language: string;
-  include_data_retrieval?: boolean;
 }
-
-// Data retrieval utilities
-const extractLocationInfo = (queryText: string): { district?: string; state?: string; crop?: string } => {
-  const text = queryText.toLowerCase();
-  
-  // Common Indian districts and states patterns
-  const districts = ['allahabad', 'prayagraj', 'lucknow', 'kanpur', 'varanasi', 'agra', 'meerut', 'patna', 'gaya', 'muzaffarpur', 'pune', 'mumbai', 'nashik', 'bangalore', 'mysore', 'hubli', 'chennai', 'coimbatore', 'madurai', 'hyderabad', 'warangal', 'visakhapatnam'];
-  const states = ['uttar pradesh', 'bihar', 'maharashtra', 'karnataka', 'tamil nadu', 'telangana', 'andhra pradesh', 'punjab', 'haryana', 'rajasthan', 'madhya pradesh', 'gujarat', 'west bengal', 'odisha', 'kerala'];
-  const crops = ['paddy', 'rice', 'wheat', 'maize', 'cotton', 'sugarcane', 'soybean', 'mustard', 'gram', 'arhar', 'moong', 'urad', 'groundnut', 'sunflower', 'sesame', 'potato', 'onion', 'tomato'];
-
-  const district = districts.find(d => text.includes(d));
-  const state = states.find(s => text.includes(s));
-  const crop = crops.find(c => text.includes(c));
-
-  return { district, state, crop };
-};
-
-const getRelevantData = async (queryText: string): Promise<string> => {
-  const locationInfo = extractLocationInfo(queryText);
-  let dataContext = '\n\nRELEVANT AGRICULTURAL DATA:\n';
-  
-  // Add seasonal context
-  const currentMonth = new Date().getMonth() + 1;
-  const isKharif = currentMonth >= 6 && currentMonth <= 10;
-  const isRabi = currentMonth >= 11 || currentMonth <= 3;
-  
-  if (isKharif) {
-    dataContext += '- SEASON: Kharif season (June-October) - Monsoon crops\n';
-  } else if (isRabi) {
-    dataContext += '- SEASON: Rabi season (November-March) - Winter crops\n';
-  } else {
-    dataContext += '- SEASON: Summer season (April-May) - Summer crops\n';
-  }
-
-  // Add location-specific advice
-  if (locationInfo.district || locationInfo.state) {
-    dataContext += `- LOCATION: ${locationInfo.district || locationInfo.state}\n`;
-  }
-
-  // Add crop-specific context
-  if (locationInfo.crop) {
-    dataContext += `- CROP: ${locationInfo.crop}\n`;
-    
-    // Add crop-specific seasonal advice
-    if (locationInfo.crop.includes('rice') || locationInfo.crop.includes('paddy')) {
-      if (isKharif) {
-        dataContext += '- RICE ADVISORY: Ideal time for transplanting. Ensure 5-7 cm standing water.\n';
-      }
-    } else if (locationInfo.crop.includes('wheat')) {
-      if (isRabi) {
-        dataContext += '- WHEAT ADVISORY: Optimal sowing time. Use certified seeds, apply NPK fertilizers.\n';
-      }
-    }
-  }
-
-  // Add general weather context (mock data for now)
-  dataContext += '- WEATHER: Current temperature 26-30°C, humidity 65-75%\n';
-  dataContext += '- GOVERNMENT SCHEMES: PM-KISAN (₹6000/year), PMFBY (crop insurance), KCC (credit facility)\n';
-  
-  return dataContext;
-};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -81,27 +19,13 @@ serve(async (req) => {
   }
 
   try {
-    const { cleaned_query_text, detected_language, language, include_data_retrieval }: GenerateAdviceRequest = await req.json();
+    const { cleaned_query_text, detected_language, language }: GenerateAdviceRequest = await req.json();
 
     if (!cleaned_query_text) {
       return new Response(
         JSON.stringify({ error: 'Query text is required' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Get relevant agricultural data if requested
-    let dataContext = '';
-    let sources: string[] = [];
-    
-    if (include_data_retrieval) {
-      try {
-        dataContext = await getRelevantData(cleaned_query_text);
-        sources = ['Agricultural Calendar', 'Seasonal Advisory', 'Government Schemes'];
-      } catch (error) {
-        console.warn('Error retrieving agricultural data:', error);
-        dataContext = '\n\nNote: Using general agricultural knowledge.\n';
-      }
     }
 
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
@@ -127,13 +51,10 @@ Guidelines:
 - Keep advice under 150 words and explanation under 100 words
 - Be culturally sensitive and consider resource constraints of small farmers
 - ${isHindi ? 'Respond in Hindi (Devanagari script)' : `Respond in ${responseLanguage} if possible, otherwise in English`}
-- When data is provided, incorporate it naturally into your advice and cite relevant sources
 
 Format your response as JSON with two fields:
 - "advice": Practical, actionable farming advice
 - "explanation": Brief explanation of why this advice works
-
-${dataContext}
 
 User Query: ${cleaned_query_text}`;
 
@@ -225,8 +146,7 @@ User Query: ${cleaned_query_text}`;
     return new Response(
       JSON.stringify({ 
         advice: advice.trim(),
-        explanation: explanation.trim(),
-        sources: sources.length > 0 ? sources : undefined
+        explanation: explanation.trim()
       }), 
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

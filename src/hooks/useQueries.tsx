@@ -13,7 +13,6 @@ export interface Query {
   language: string;
   advice: string;
   explanation: string | null;
-  sources?: string[] | null;
   created_at: string;
 }
 
@@ -23,14 +22,13 @@ export const useQueries = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const generateAdviceWithAI = async (cleanedText: string, detectedLanguage: string | null, language: string): Promise<{ advice: string; explanation: string; sources?: string[] }> => {
+  const generateAdviceWithAI = async (cleanedText: string, detectedLanguage: string | null, language: string): Promise<{ advice: string; explanation: string }> => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-advice', {
         body: {
           cleaned_query_text: cleanedText,
           detected_language: detectedLanguage,
-          language: language,
-          include_data_retrieval: true
+          language: language
         }
       });
 
@@ -45,8 +43,7 @@ export const useQueries = () => {
 
       return {
         advice: data.advice,
-        explanation: data.explanation || 'AI-generated farming advice based on your query.',
-        sources: data.sources
+        explanation: data.explanation || 'AI-generated farming advice based on your query.'
       };
     } catch (error) {
       console.error('Error calling AI service:', error);
@@ -103,7 +100,7 @@ export const useQueries = () => {
         return;
       }
 
-      const { advice, explanation, sources } = await generateAdviceWithAI(processed.cleanedText, processed.detectedLanguage, language);
+      const { advice, explanation } = await generateAdviceWithAI(processed.cleanedText, processed.detectedLanguage, language);
       
       const { data, error } = await supabase
         .from('queries')
@@ -114,8 +111,7 @@ export const useQueries = () => {
           detected_language: processed.detectedLanguage,
           language,
           advice,
-          explanation,
-          sources: sources ? JSON.stringify(sources) : null
+          explanation
         }])
         .select()
         .single();
