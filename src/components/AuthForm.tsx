@@ -340,6 +340,21 @@ export const AuthForm = () => {
               Sign in with Google
             </Button>
           </div>
+
+          {/* Debug Mode Button */}
+          {connectionStatus === 'error' && (
+            <div className="mt-4 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDebugger(true)}
+                className="text-red-600 hover:text-red-700"
+              >
+                <Settings className="h-4 w-4 mr-1" />
+                Debug Configuration Issues
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
