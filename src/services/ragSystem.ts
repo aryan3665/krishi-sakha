@@ -258,26 +258,39 @@ export class RetrievalAugmentedGeneration {
 
     // Weather Section
     if (weatherData) {
+      const weatherSource = sources.find(s => s.type === 'weather');
       formattedAnswer += isHindi ? '🌦 **मौसम जानकारी:**\n' : '🌦 **Weather Information:**\n';
       formattedAnswer += `• ${isHindi ? 'तापमान' : 'Temperature'}: ${weatherData.temperature}°C\n`;
       formattedAnswer += `• ${isHindi ? 'नमी' : 'Humidity'}: ${weatherData.humidity}%\n`;
       if (weatherData.forecast) {
         formattedAnswer += `• ${isHindi ? 'पूर्वानुमान' : 'Forecast'}: ${weatherData.forecast[0]?.condition || 'Variable'}\n`;
       }
-      formattedAnswer += '\n';
+      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${weatherSource?.source} (${weatherSource?.freshness || 'fresh'})*\n\n`;
     }
 
-    // Market Section
-    if (marketData && marketData.prices) {
+    // Market Section - Enhanced with transparent missing data handling
+    if (marketData) {
+      const marketSource = sources.find(s => s.type === 'market');
       formattedAnswer += isHindi ? '💰 **बाजार भाव:**\n' : '💰 **Market Prices:**\n';
-      marketData.prices.slice(0, 3).forEach((price: any) => {
-        formattedAnswer += `• ${price.crop}: ₹${price.modalPrice}/${isHindi ? 'क्विंटल' : 'quintal'}\n`;
-      });
-      formattedAnswer += '\n';
+
+      // Show available price data
+      if (marketData.prices && marketData.prices.length > 0) {
+        marketData.prices.slice(0, 3).forEach((price: any) => {
+          formattedAnswer += `• ${price.crop}: ₹${price.modalPrice}/${isHindi ? 'क्विंटल' : 'quintal'}\n`;
+        });
+      }
+
+      // Add transparent note for missing data
+      if (marketData.missingDataNote) {
+        formattedAnswer += `\n⚠️ ${marketData.missingDataNote}\n`;
+      }
+
+      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${marketSource?.source} (${marketSource?.freshness || 'fresh'})*\n\n`;
     }
 
     // Soil Section
     if (soilData) {
+      const soilSource = sources.find(s => s.type === 'soil');
       formattedAnswer += isHindi ? '🌱 **मिट्टी और उर्वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
       formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रकार' : 'Soil Type'}: ${soilData.soilType}\n`;
       formattedAnswer += `• pH: ${soilData.pH}\n`;
@@ -286,37 +299,73 @@ export class RetrievalAugmentedGeneration {
           formattedAnswer += `• ${rec}\n`;
         });
       }
-      formattedAnswer += '\n';
+      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${soilSource?.source} (${soilSource?.freshness || 'fresh'})*\n\n`;
     }
 
     // Advisory Section
     if (advisoryData && advisoryData.advisories) {
+      const advisorySource = sources.find(s => s.type === 'advisory');
       formattedAnswer += isHindi ? '📋 **कृषि सलाह:**\n' : '📋 **Agricultural Advisory:**\n';
       advisoryData.advisories.slice(0, 2).forEach((adv: any) => {
         formattedAnswer += `• **${adv.title}**: ${adv.content}\n`;
       });
-      formattedAnswer += '\n';
+      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${advisorySource?.source} (${advisorySource?.freshness || 'fresh'})*\n\n`;
     }
 
     // Scheme Section
     if (schemeData && schemeData.schemes) {
+      const schemeSource = sources.find(s => s.type === 'scheme');
       formattedAnswer += isHindi ? '📜 **सरकारी योजनाएं:**\n' : '📜 **Government Schemes:**\n';
       schemeData.schemes.slice(0, 2).forEach((scheme: any) => {
         formattedAnswer += `• **${scheme.name}**: ${scheme.benefit}\n`;
       });
-      formattedAnswer += '\n';
+      formattedAnswer += `*${isHindi ? 'स्रोत' : 'Source'}: ${schemeSource?.source} (${schemeSource?.freshness || 'fresh'})*\n\n`;
     }
 
     // General tips
     formattedAnswer += isHindi ? '💡 **सुझाव:**\n' : '💡 **Tips:**\n';
     formattedAnswer += isHindi ?
-      '• स्थानीय कृषि विशेषज्ञ से सलाह लें\n• मौसम के अनुसार फसल की देखभाल करें\n' :
-      '• Consult local agricultural experts\n• Monitor crop conditions regularly\n';
+      '• स्थानीय कृषि विशेषज्ञ से सलाह लें\n• मौसम के अनुसार फसल की देखभाल करें\n\n' :
+      '• Consult local agricultural experts\n• Monitor crop conditions regularly\n\n';
+
+    // How This Answer Was Generated section
+    formattedAnswer += this.generateTransparencySection(sources, response, isHindi);
 
     return {
       ...response,
       answer: formattedAnswer
     };
+  }
+
+  private generateTransparencySection(sources: SourceReference[], response: RAGResponse, isHindi: boolean): string {
+    let section = isHindi ? '🔍 **यह उत्तर कैसे तैयार किया गया:**\n' : '🔍 **How This Answer Was Generated:**\n';
+
+    const dataSourceCount = sources.length;
+    const freshDataCount = sources.filter(s => s.freshness === 'fresh').length;
+
+    if (isHindi) {
+      section += `• आपके प्रश्न का विश्लेषण करके विषय और स्थान की पहचान की गई\n`;
+      section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
+      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प्राप्त हुई\n`;
+      section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
+      section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
+
+      if (sources.some(s => s.data?.missingDataNote)) {
+        section += `• कुछ डेटा अनुपलब्ध होने पर पारदर्शी सूचना दी गई\n`;
+      }
+    } else {
+      section += `• Analyzed your query to identify topic, crop, and location\n`;
+      section += `• Retrieved data from ${dataSourceCount} trusted agricultural sources\n`;
+      section += `• ${freshDataCount} sources provided fresh, current information\n`;
+      section += `• AI combined this data with agricultural expertise\n`;
+      section += `• Confidence score: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis} factual basis)\n`;
+
+      if (sources.some(s => s.data?.missingDataNote)) {
+        section += `• Transparently noted where specific data was unavailable\n`;
+      }
+    }
+
+    return section;
   }
 
   private getFallbackAdvisory(query: string, language: string, reason: string): RAGResponse {
@@ -410,7 +459,7 @@ RESPONSE:`;
     const isHindi = language === 'hi';
 
     const instructions = isHindi ?
-      'नीचे दिए गए वर्तमान डेटा के साथ अपनी सलाह को अपडेट करें।' :
+      'नीचे दिए गए वर्तमान डे���ा के साथ अपनी सलाह को अपडेट करें।' :
       'Update your advice with the current data provided below.';
 
     return `${instructions}
