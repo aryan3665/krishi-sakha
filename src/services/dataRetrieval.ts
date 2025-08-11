@@ -185,18 +185,29 @@ export class DataRetrievalAgent {
 
   private isDataAvailableForCrop(cropName: string, location: LocationInfo): boolean {
     // Simulate data availability - in real implementation, this would check actual API
-    // For demo purposes, randomly make some crops "unavailable"
+    // For demo purposes, make some crops occasionally "unavailable" to demonstrate transparent handling
     const cropLower = cropName.toLowerCase();
 
-    // Make certain crops occasionally "unavailable" to demonstrate the feature
-    const sometimesUnavailable = ['potato', 'tomato', 'brinjal', 'okra', 'carrot'];
+    // Make certain vegetables occasionally "unavailable" to demonstrate the feature
+    const sometimesUnavailable = ['potato', 'tomato', 'brinjal', 'okra', 'carrot', 'cabbage', 'cauliflower'];
+    const rarelyAvailable = ['asparagus', 'lettuce', 'spinach', 'kale']; // Specialty vegetables
 
-    if (sometimesUnavailable.includes(cropLower)) {
-      return Math.random() > 0.3; // 30% chance of being unavailable
+    if (rarelyAvailable.includes(cropLower)) {
+      return Math.random() > 0.7; // 70% chance of being unavailable
     }
 
-    // Major crops are usually available
-    return Math.random() > 0.1; // 10% chance of being unavailable
+    if (sometimesUnavailable.includes(cropLower)) {
+      return Math.random() > 0.4; // 40% chance of being unavailable
+    }
+
+    // Major staple crops are usually available
+    const majorCrops = ['rice', 'wheat', 'maize', 'onion'];
+    if (majorCrops.includes(cropLower)) {
+      return Math.random() > 0.05; // 5% chance of being unavailable
+    }
+
+    // Other crops
+    return Math.random() > 0.2; // 20% chance of being unavailable
   }
 
   private getCropCategory(cropName: string): string {
