@@ -167,19 +167,168 @@ export class RetrievalAugmentedGeneration {
     return fallbackData;
   }
 
-  private getBasicOfflineResponse(query: string, language: string): RAGResponse {
-    const basicAdvice = language === 'hi' ?
-      'इंटरनेट कनेक्शन नहीं है। कृपया स्थानीय कृषि विशेषज्ञ से सलाह लें।' :
-      'No internet connection available. Please consult with local agricultural experts for specific advice based on your soil, climate, and crop conditions.';
+  private async checkSystemHealth(): Promise<void> {
+    try {
+      // Check API status
+      this.systemHealth.apiStatus = offlineCache.isOnline();
+
+      // Check cache status
+      const stats = offlineCache.getCacheStats();
+      this.systemHealth.cacheStatus = stats.totalResponses >= 0;
+
+      // Check language processing
+      this.systemHealth.languageProcessing = true; // Basic check
+
+      // Check demo mode
+      this.systemHealth.demoMode = true;
+    } catch (error) {
+      console.warn('System health check failed:', error);
+    }
+  }
+
+  private getSystemHealthDisclaimer(): string | undefined {
+    const issues = [];
+    if (!this.systemHealth.apiStatus) issues.push('Limited connectivity');
+    if (!this.systemHealth.cacheStatus) issues.push('Cache unavailable');
+
+    return issues.length > 0 ? `⚠️ ${issues.join(', ')} - Using available data` : undefined;
+  }
+
+  private formatFarmerFriendlyResponse(response: RAGResponse, sources: SourceReference[], language: string): RAGResponse {
+    const isHindi = language === 'hi';
+
+    // Extract data by type for structured formatting
+    const weatherData = sources.find(s => s.type === 'weather')?.data;
+    const marketData = sources.find(s => s.type === 'market')?.data;
+    const soilData = sources.find(s => s.type === 'soil')?.data;
+    const advisoryData = sources.find(s => s.type === 'advisory')?.data;
+    const schemeData = sources.find(s => s.type === 'scheme')?.data;
+
+    let formattedAnswer = isHindi ? '🌾 कृषि सलाह\n\n' : '🌾 Agricultural Advisory\n\n';
+
+    // Weather Section
+    if (weatherData) {
+      formattedAnswer += isHindi ? '🌦 **मौसम जानकारी:**\n' : '🌦 **Weather Information:**\n';
+      formattedAnswer += `• ${isHindi ? 'तापमान' : 'Temperature'}: ${weatherData.temperature}°C\n`;
+      formattedAnswer += `• ${isHindi ? 'नमी' : 'Humidity'}: ${weatherData.humidity}%\n`;
+      if (weatherData.forecast) {
+        formattedAnswer += `• ${isHindi ? 'पूर्वानुमान' : 'Forecast'}: ${weatherData.forecast[0]?.condition || 'Variable'}\n`;
+      }
+      formattedAnswer += '\n';
+    }
+
+    // Market Section
+    if (marketData && marketData.prices) {
+      formattedAnswer += isHindi ? '💰 **बाजार भाव:**\n' : '💰 **Market Prices:**\n';
+      marketData.prices.slice(0, 3).forEach((price: any) => {
+        formattedAnswer += `• ${price.crop}: ₹${price.modalPrice}/${isHindi ? 'क्विंटल' : 'quintal'}\n`;
+      });
+      formattedAnswer += '\n';
+    }
+
+    // Soil Section
+    if (soilData) {
+      formattedAnswer += isHindi ? '🌱 **मिट्टी और उर���वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
+      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रकार' : 'Soil Type'}: ${soilData.soilType}\n`;
+      formattedAnswer += `• pH: ${soilData.pH}\n`;
+      if (soilData.recommendations) {
+        soilData.recommendations.slice(0, 2).forEach((rec: string) => {
+          formattedAnswer += `• ${rec}\n`;
+        });
+      }
+      formattedAnswer += '\n';
+    }
+
+    // Advisory Section
+    if (advisoryData && advisoryData.advisories) {
+      formattedAnswer += isHindi ? '📋 **कृषि सलाह:**\n' : '📋 **Agricultural Advisory:**\n';
+      advisoryData.advisories.slice(0, 2).forEach((adv: any) => {
+        formattedAnswer += `• **${adv.title}**: ${adv.content}\n`;
+      });
+      formattedAnswer += '\n';
+    }
+
+    // Scheme Section
+    if (schemeData && schemeData.schemes) {
+      formattedAnswer += isHindi ? '📜 **सरकारी योजनाएं:**\n' : '📜 **Government Schemes:**\n';
+      schemeData.schemes.slice(0, 2).forEach((scheme: any) => {
+        formattedAnswer += `• **${scheme.name}**: ${scheme.benefit}\n`;
+      });
+      formattedAnswer += '\n';
+    }
+
+    // General tips
+    formattedAnswer += isHindi ? '💡 **सुझाव:**\n' : '💡 **Tips:**\n';
+    formattedAnswer += isHindi ?
+      '• स्थानीय कृषि विशेषज्ञ से सलाह लें\n• मौसम के अनुसार फसल की देखभाल करें\n' :
+      '• Consult local agricultural experts\n• Monitor crop conditions regularly\n';
 
     return {
-      answer: basicAdvice,
-      sources: [],
-      confidence: 0.3,
-      factualBasis: 'low',
-      generatedContent: ['General offline advice'],
-      disclaimer: 'This is a basic offline response. Connect to internet for detailed, data-driven advice.'
+      ...response,
+      answer: formattedAnswer
     };
+  }
+
+  private getFallbackAdvisory(query: string, language: string, reason: string): RAGResponse {
+    const isHindi = language === 'hi';
+
+    const fallbackAdvice = isHindi ?
+      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
+      `🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n⚠️ ${reason === 'Invalid query format' ? 'Please ask a clear farming question' : 'Live data temporarily unavailable'}`;
+
+    return {
+      answer: fallbackAdvice,
+      sources: [],
+      confidence: 0.4,
+      factualBasis: 'low',
+      generatedContent: ['General agricultural guidance'],
+      disclaimer: `Based on general agricultural knowledge - ${reason}`
+    };
+  }
+
+  private getBasicOfflineResponse(query: string, language: string): RAGResponse {
+    return this.getFallbackAdvisory(query, language, 'Offline mode');
+  }
+
+  private calculateConfidence(data: RetrievedData[]): number {
+    if (data.length === 0) return 0.3;
+    const avgConfidence = data.reduce((sum, d) => sum + d.confidence, 0) / data.length;
+    return Math.min(0.95, avgConfidence);
+  }
+
+  private assessFactualBasis(data: RetrievedData[]): 'high' | 'medium' | 'low' {
+    const freshData = data.filter(d => d.metadata.freshness === 'fresh');
+    if (freshData.length >= 2) return 'high';
+    if (data.length >= 2) return 'medium';
+    return 'low';
+  }
+
+  private constructFarmerFriendlyPrompt(query: string, factualContext: string, language: string, context: QueryContext): string {
+    const isHindi = language === 'hi';
+    const location = context.location ? `${context.location.district}, ${context.location.state}` : 'India';
+    const crop = context.crop?.name || 'crops';
+
+    const instructions = isHindi ?
+      'आप एक कृषि विशेषज्ञ हैं। किसान को सरल और स्पष्ट सलाह दें। इमोजी का उपयोग करें।' :
+      'You are an agricultural expert. Provide clear, simple advice to farmers. Use emojis for visual appeal.';
+
+    return `${instructions}
+
+FARMER'S QUESTION: ${query}
+LOCATION: ${location}
+CROP: ${crop}
+
+${factualContext}
+
+RESPONSE FORMAT:
+- Use emojis (🌦 🌱 💰 📋 💡)
+- Keep language simple and farmer-friendly
+- Structure with clear sections
+- Highlight key information with **bold**
+- Provide actionable advice
+- Maximum 300 words
+
+RESPONSE:`;
   }
 
   private createSourceReferences(retrievedData: RetrievedData[]): SourceReference[] {
