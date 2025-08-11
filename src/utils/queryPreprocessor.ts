@@ -1,6 +1,6 @@
 // Enhanced query preprocessing with agricultural context extraction
 
-import { LocationInfo, CropInfo, QueryContext, INDIAN_STATES, COMMON_CROPS } from '../services/dataSources';
+import { LocationInfo, CropInfo, QueryContext, INDIAN_STATES, COMMON_CROPS, CROP_TRANSLATIONS } from '../services/dataSources';
 
 export interface ProcessedQuery {
   originalText: string;
@@ -111,7 +111,7 @@ const transliterateHinglishWords = (text: string): string => {
     'keet': 'कीट',
     'kisan': 'किसान',
     'fasal': 'फसल',
-    'mitti': 'मिट्टी',
+    'mitti': 'म���ट्टी',
     'zameen': 'ज़मीन',
     'gaay': 'गाय',
     'bhains': 'भैंस',
