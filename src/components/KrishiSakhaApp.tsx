@@ -280,12 +280,23 @@ export const KrishiSakhaApp = () => {
         return <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <div className="text-2xl">🧪</div>
-              Demo & Testing
+              {getStringTranslation(language, 'demo') || 'Demo & Testing'}
             </h2>
-            <DemoController
-              onRunScenario={generateAdvice}
+            <DemoModeHandler
+              onRunExample={generateAdvice}
               isLoading={loading}
+              language={language}
             />
+            <div className="mt-6">
+              <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                <div className="text-xl">⚙️</div>
+                Advanced Testing
+              </h3>
+              <DemoController
+                onRunScenario={generateAdvice}
+                isLoading={loading}
+              />
+            </div>
           </div>;
       default:
         return null;
