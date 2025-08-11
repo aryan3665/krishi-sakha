@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { preprocessQuery } from '@/utils/queryPreprocessor';
+import { ragSystem, RAGResponse } from '@/services/ragSystem';
 
 export interface Query {
   id: string;
