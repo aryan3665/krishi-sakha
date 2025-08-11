@@ -278,7 +278,7 @@ export class RetrievalAugmentedGeneration {
     const isHindi = language === 'hi';
 
     const fallbackAdvice = isHindi ?
-      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
+      `🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझा��:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उप��ोग करें\n\n⚠️ ${reason === 'Invalid query format' ? 'कृपया स्पष्ट प्रश्न पूछें' : 'लाइव डेटा अनुपलब्ध'}` :
       `🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n⚠️ ${reason === 'Invalid query format' ? 'Please ask a clear farming question' : 'Live data temporarily unavailable'}`;
 
     return {
@@ -334,6 +334,148 @@ RESPONSE FORMAT:
 - Maximum 300 words
 
 RESPONSE:`;
+  }
+
+  private constructInitialPrompt(query: string, language: string, context: QueryContext): string {
+    const isHindi = language === 'hi';
+    const location = context.location ? `${context.location.district}, ${context.location.state}` : 'India';
+    const crop = context.crop?.name || 'general farming';
+
+    const instructions = isHindi ?
+      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें।' :
+      'You are an agricultural expert. Provide advice based on general agricultural knowledge only.';
+
+    return `${instructions}
+
+FARMER'S QUESTION: ${query}
+LOCATION: ${location}
+TOPIC: ${crop}
+
+INSTRUCTIONS:
+- Provide general agricultural guidance
+- Use simple, farmer-friendly language
+- Keep response under 200 words
+- Be practical and actionable
+- ${isHindi ? 'हिंदी में जवाब दें' : 'Respond in English'}
+
+RESPONSE:`;
+  }
+
+  private constructGroundedPrompt(query: string, initialAnswer: string, factualContext: string, language: string): string {
+    const isHindi = language === 'hi';
+
+    const instructions = isHindi ?
+      'नीचे दिए गए वर्तमान डेटा के साथ अपनी सलाह को अपडेट करें।' :
+      'Update your advice with the current data provided below.';
+
+    return `${instructions}
+
+ORIGINAL QUESTION: ${query}
+YOUR INITIAL ANSWER: ${initialAnswer}
+
+CURRENT VERIFIED DATA:
+${factualContext}
+
+INSTRUCTIONS:
+- Combine your general knowledge with the specific data provided
+- Update prices, weather, and local information with exact data
+- Keep the same helpful tone but be more specific
+- Use emojis and farmer-friendly language
+- Maximum 300 words
+
+UPDATED RESPONSE:`;
+  }
+
+  private shouldGroundResponse(context: QueryContext, initialAnswer: string): boolean {
+    // Check if query needs current data
+    const needsDataTypes = context.queryType;
+
+    // Always ground if specific location, crop, or data-dependent topics mentioned
+    if (context.location || context.crop) return true;
+    if (needsDataTypes.some(type => ['weather', 'market', 'price', 'scheme'].includes(type))) return true;
+
+    // Check if LLM response mentions needing current data
+    if (initialAnswer.includes('current') || initialAnswer.includes('latest') || initialAnswer.includes('today')) return true;
+
+    return false;
+  }
+
+  private filterRelevantData(retrievedData: RetrievedData[], context: QueryContext): RetrievedData[] {
+    return retrievedData.filter(data => {
+      // If specific crop mentioned, prioritize matching crop data
+      if (context.crop && data.type === 'market') {
+        const marketData = data.data;
+        if (marketData.requestedCrop && marketData.requestedCrop !== context.crop.name) {
+          return false; // Filter out irrelevant crop data
+        }
+      }
+
+      // If location mentioned, prioritize matching location data
+      if (context.location && data.location) {
+        if (data.location.state !== context.location.state &&
+            data.location.district !== context.location.district) {
+          // Allow general data but with lower priority
+          return true;
+        }
+      }
+
+      return true;
+    });
+  }
+
+  private calculateDynamicConfidence(retrievedData: RetrievedData[], context: QueryContext): number {
+    let confidence = 0.5; // Base confidence
+
+    // Boost confidence based on data quality
+    const freshData = retrievedData.filter(d => d.metadata.freshness === 'fresh').length;
+    const totalData = retrievedData.length;
+
+    if (totalData > 0) {
+      confidence += (freshData / totalData) * 0.3; // Up to 30% boost for fresh data
+    }
+
+    // Boost for specific context matching
+    if (context.crop) {
+      const cropData = retrievedData.find(d => d.type === 'market' &&
+        d.data.requestedCrop === context.crop?.name);
+      if (cropData) confidence += 0.15; // 15% boost for matching crop data
+    }
+
+    if (context.location) {
+      const locationData = retrievedData.find(d => d.location &&
+        (d.location.state === context.location?.state || d.location.district === context.location?.district));
+      if (locationData) confidence += 0.1; // 10% boost for matching location
+    }
+
+    // Boost for multiple data sources
+    const uniqueTypes = new Set(retrievedData.map(d => d.type)).size;
+    confidence += Math.min(uniqueTypes * 0.05, 0.2); // 5% per type, max 20%
+
+    return Math.min(confidence, 0.95); // Cap at 95%
+  }
+
+  private identifyGeneratedContent(answer: string): string[] {
+    const generatedPatterns = [
+      /generally\s+speaking/i,
+      /in\s+most\s+cases/i,
+      /typically/i,
+      /usually/i,
+      /it\s+is\s+recommended/i,
+      /आमतौर\s+पर/i,
+      /सामान्यतः/i,
+      /अक्सर/i
+    ];
+
+    const sentences = answer.split(/[.।!?]+/);
+    const generated: string[] = [];
+
+    sentences.forEach(sentence => {
+      if (generatedPatterns.some(pattern => pattern.test(sentence))) {
+        generated.push(sentence.trim());
+      }
+    });
+
+    return generated;
   }
 
   private createSourceReferences(retrievedData: RetrievedData[]): SourceReference[] {
