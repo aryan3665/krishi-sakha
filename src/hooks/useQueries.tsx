@@ -79,83 +79,104 @@ export const useQueries = () => {
     if (!user) return;
     
     setLoading(true);
-    try {
-      // Preprocess the query
-      const processed = preprocessQuery(queryText);
-      
-      // Validate the processed query
-      if (!processed.isValid) {
-        toast({
-          title: "Invalid Query",
-          description: processed.error || "Please enter a valid farming question.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
+
+    // STEP 1: ALWAYS generate the AI response first (never block this)
+    const ragResponse = await generateAdviceWithRAG(queryText, language);
+
+    // STEP 2: Process the query for storage
+    const processed = preprocessQuery(queryText);
+
+    // STEP 3: Create response object
+    const responseData = {
+      id: `temp_${Date.now()}`,
+      user_id: user.id,
+      query_text: processed.cleanedText || queryText,
+      original_query_text: processed.originalText || queryText,
+      detected_language: processed.detectedLanguage || language,
+      language,
+      advice: ragResponse.answer,
+      explanation: ragResponse.disclaimer || `🌾 AI-generated advice with ${ragResponse.factualBasis} factual basis (${(ragResponse.confidence * 100).toFixed(0)}% confidence)`,
+      created_at: new Date().toISOString(),
+      sources: ragResponse.sources,
+      confidence: ragResponse.confidence,
+      factual_basis: ragResponse.factualBasis
+    };
+
+    // STEP 4: Try to save to database with retries (but never block the response)
+    let savedToDatabase = false;
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    const attemptSave = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('queries')
+          .insert([{
+            user_id: user.id,
+            query_text: processed.cleanedText || queryText,
+            original_query_text: processed.originalText || queryText,
+            detected_language: processed.detectedLanguage || language,
+            language,
+            advice: ragResponse.answer,
+            explanation: responseData.explanation,
+            sources: ragResponse.sources,
+            confidence: ragResponse.confidence,
+            factual_basis: ragResponse.factualBasis
+          }])
+          .select()
+          .single();
+
+        if (!error && data) {
+          savedToDatabase = true;
+          responseData.id = data.id; // Update with real ID
+          setQueries(prev => [data, ...prev.slice(0, 9)]);
+          console.log('✅ Query saved to database successfully');
+          return data;
+        } else {
+          throw error;
+        }
+      } catch (err) {
+        console.warn(`⚠️ Database save attempt ${retryCount + 1} failed:`, err);
+        retryCount++;
+
+        if (retryCount < maxRetries) {
+          // Retry after a short delay
+          setTimeout(attemptSave, 1000 * retryCount);
+        } else {
+          console.error('❌ All database save attempts failed');
+        }
       }
+    };
 
-      const ragResponse = await generateAdviceWithRAG(queryText, language);
+    // Start save attempts in background (non-blocking)
+    attemptSave();
 
-      const { data, error } = await supabase
-        .from('queries')
-        .insert([{
-          user_id: user.id,
-          query_text: processed.cleanedText,
-          original_query_text: processed.originalText,
-          detected_language: processed.detectedLanguage,
-          language,
-          advice: ragResponse.answer,
-          explanation: ragResponse.disclaimer || `AI-generated advice with ${ragResponse.factualBasis} factual basis (${(ragResponse.confidence * 100).toFixed(0)}% confidence)`,
-          sources: ragResponse.sources,
-          confidence: ragResponse.confidence,
-          factual_basis: ragResponse.factualBasis
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      
-      setQueries(prev => [data, ...prev.slice(0, 9)]);
-      
+    // STEP 5: Show response immediately with appropriate message
+    if (processed.isValid !== false) {
       toast({
-        title: "Query submitted",
-        description: "Your agricultural query has been processed successfully!",
+        title: "🌾 Your farming advice is ready!",
+        description: "AI has processed your question successfully.",
       });
-      
-      return data;
-    } catch (error) {
-      console.error('Error submitting query:', error);
-
-      // Even if database submission fails, still provide the RAG response
-      const ragResponse = await generateAdviceWithRAG(queryText, language);
-
-      // Show warning but don't fail completely
+    } else {
       toast({
-        title: "Partial Success",
-        description: "Got advice but couldn't save to history. Response shown below.",
-        variant: "default",
+        title: "🌾 Advice generated",
+        description: "Your question has been processed with basic formatting.",
       });
-
-      // Return a mock query object with the response
-      const mockQuery = {
-        id: `temp_${Date.now()}`,
-        user_id: user?.id || 'temp',
-        query_text: processed.cleanedText,
-        original_query_text: processed.originalText,
-        detected_language: processed.detectedLanguage,
-        language,
-        advice: ragResponse.answer,
-        explanation: ragResponse.disclaimer || `Generated advice with ${ragResponse.factualBasis} factual basis`,
-        created_at: new Date().toISOString(),
-        sources: ragResponse.sources,
-        confidence: ragResponse.confidence,
-        factual_basis: ragResponse.factualBasis
-      };
-
-      return mockQuery;
-    } finally {
-      setLoading(false);
     }
+
+    // Check save status after a short delay and show note if needed
+    setTimeout(() => {
+      if (!savedToDatabase) {
+        toast({
+          title: "⚠️ Unable to save to history right now",
+          description: "Your advice is still shown below. Retrying quietly...",
+          variant: "default",
+        });
+      }
+    }, 2000);
+
+    setLoading(false);
+    return responseData;
   };
 
   const deleteQuery = async (queryId: string) => {
