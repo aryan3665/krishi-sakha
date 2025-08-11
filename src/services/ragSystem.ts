@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { dataAgent, RetrievedData } from './dataRetrieval';
 import { preprocessQuery } from '@/utils/queryPreprocessor';
 import { QueryContext } from './dataSources';
+import { offlineCache } from './offlineCache';
 
 export interface RAGResponse {
   answer: string;
