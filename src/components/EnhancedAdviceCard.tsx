@@ -153,12 +153,15 @@ export const EnhancedAdviceCard = ({
                     {source.citation}
                   </p>
 
-                  {/* Show missing data notes transparently */}
+                  {/* Show missing data notes transparently - make more prominent */}
                   {source.data?.missingDataNote && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mb-2">
-                      <p className="text-xs text-yellow-800">
-                        ⚠️ {source.data.missingDataNote}
-                      </p>
+                    <div className="bg-yellow-50 border border-yellow-300 rounded p-3 mb-2 border-l-4 border-l-yellow-500">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-yellow-800 font-medium">
+                          {source.data.missingDataNote}
+                        </p>
+                      </div>
                     </div>
                   )}
 
