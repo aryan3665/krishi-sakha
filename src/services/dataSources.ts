@@ -28,7 +28,7 @@ export const DATA_SOURCES: DataSource[] = [
     name: 'OpenWeatherMap',
     description: 'Global weather data with Indian city support',
     baseUrl: 'https://api.openweathermap.org/data/2.5',
-    apiKey: process.env.VITE_OPENWEATHER_API_KEY,
+    apiKey: import.meta.env.VITE_OPENWEATHER_API_KEY,
     type: 'weather',
     region: 'national',
     updateFrequency: 'hourly',
