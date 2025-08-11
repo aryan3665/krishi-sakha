@@ -313,8 +313,9 @@ export const KrishiSakhaApp = () => {
               <div className="absolute inset-0 h-6 w-6 text-accent opacity-50 animate-ping"></div>
             </div>
             <span className="font-semibold gradient-earth bg-clip-text text-transparent">Krishi Sakha</span>
+            <SystemHealthIndicator />
           </div>
-          
+
           <div className="flex items-center gap-2">
             {/* User Profile Display */}
             {user && (
