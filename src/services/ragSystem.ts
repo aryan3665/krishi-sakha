@@ -103,14 +103,18 @@ export class RetrievalAugmentedGeneration {
               disclaimer: this.getSystemHealthDisclaimer()
             };
           } else {
-            console.log('⚠️ No relevant data found - using LLM response only');
+            console.log('⚠️ No relevant data found - providing guidance with suggestions');
+            // Generate response with suggested questions when data is insufficient
+            const suggestedQuestionsResponse = this.generateSuggestedQuestionsResponse(
+              processed.cleanedText, language, processed.extractedContext
+            );
             response = {
-              answer: initialAnswer,
+              answer: suggestedQuestionsResponse,
               sources: [],
-              confidence: 0.6, // Medium confidence for ungrounded response
+              confidence: 0.6,
               factualBasis: 'low',
-              generatedContent: [initialAnswer],
-              disclaimer: 'Response based on general agricultural knowledge only'
+              generatedContent: [],
+              disclaimer: 'Insufficient data available - suggested questions provided'
             };
           }
         } else {
@@ -348,7 +352,7 @@ export class RetrievalAugmentedGeneration {
       section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
       section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प्राप्त हुई\n`;
       section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
-      section += `• ��िश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
+      section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
       if (sources.some(s => s.data?.missingDataNote)) {
         section += `• कुछ डेटा अनुपलब्ध होने पर पारदर्शी सूचना दी गई\n`;
@@ -385,7 +389,7 @@ export class RetrievalAugmentedGeneration {
     if (isHindi) {
       response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा रहेगा?"\n`;
       response += `• 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
-      response += `• 🐛 "${location} में कप��स के लिए कीट चेतावनी"\n`;
+      response += `• 🐛 "${location} में कपास के लिए कीट चेतावनी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
       response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
       response += `• 💡 "${location} में इस मौसम में कौन सी फसल लगाएं?"`;
@@ -415,7 +419,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Case 2: General guidance with suggestions
       fallbackAdvice += isHindi ?
-        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
+        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n���� **अधिक मदद के लिए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
         '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
     }
 
@@ -503,7 +507,7 @@ RESPONSE:`;
     const isHindi = language === 'hi';
 
     const instructions = isHindi ?
-      'नीचे दिए गए वर्तमान डे���ा के साथ अपनी सलाह को अपडेट करें।' :
+      'नीचे दिए गए वर्तम���न डे���ा के साथ अपनी सलाह को अपडेट करें।' :
       'Update your advice with the current data provided below.';
 
     return `${instructions}
