@@ -306,7 +306,7 @@ export class RetrievalAugmentedGeneration {
     if (soilData) {
       const soilSource = sources.find(s => s.type === 'soil');
       formattedAnswer += isHindi ? '🌱 **मिट्टी और उर्वरक:**\n' : '🌱 **Soil & Fertilizer:**\n';
-      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रकार' : 'Soil Type'}: ${soilData.soilType}\n`;
+      formattedAnswer += `• ${isHindi ? 'मिट्टी का प्रक��र' : 'Soil Type'}: ${soilData.soilType}\n`;
       formattedAnswer += `• pH: ${soilData.pH}\n`;
       if (soilData.recommendations) {
         soilData.recommendations.slice(0, 2).forEach((rec: string) => {
@@ -393,7 +393,7 @@ export class RetrievalAugmentedGeneration {
       '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
       '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n';
 
-    response += isHindi ? '📝 **आप ये सवाल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
+    response += isHindi ? '📝 **आप ये सव��ल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
 
     // Generate location-specific suggestions
     if (isHindi) {
@@ -424,7 +424,7 @@ export class RetrievalAugmentedGeneration {
     if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
       // Case 1: Cannot understand query or system down
       fallbackAdvice += isHindi ?
-        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पंजाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पंजाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के ���िसानों के लिए सरकारी योजनाएं"' :
         '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
     } else {
       // Case 2: General guidance with suggestions
@@ -554,11 +554,30 @@ UPDATED RESPONSE:`;
 
   private filterRelevantData(retrievedData: RetrievedData[], context: QueryContext): RetrievedData[] {
     return retrievedData.filter(data => {
-      // If specific crop mentioned, prioritize matching crop data
+      // If specific crop mentioned, be strict about matching
       if (context.crop && data.type === 'market') {
         const marketData = data.data;
+
+        // If the requested crop data is explicitly unavailable, filter it out
+        if (marketData.missingDataNote && marketData.requestedCrop === context.crop.name) {
+          console.log(`🚫 Filtering out irrelevant market data - requested ${context.crop.name} but got alternative crops`);
+          return false; // Don't use alternative crops when specific crop was requested
+        }
+
+        // Only include if we have the actual requested crop data
         if (marketData.requestedCrop && marketData.requestedCrop !== context.crop.name) {
-          return false; // Filter out irrelevant crop data
+          return false;
+        }
+
+        // Check if the prices actually contain the requested crop
+        if (marketData.prices && marketData.prices.length > 0) {
+          const hasRequestedCrop = marketData.prices.some((price: any) =>
+            price.crop.toLowerCase() === context.crop.name.toLowerCase()
+          );
+          if (!hasRequestedCrop) {
+            console.log(`🚫 Filtering out market data - doesn't contain requested crop ${context.crop.name}`);
+            return false;
+          }
         }
       }
 
