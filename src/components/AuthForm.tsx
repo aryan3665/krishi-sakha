@@ -314,7 +314,7 @@ export const AuthForm = () => {
               variant="outline"
               className="w-full mt-4"
               onClick={handleGoogleSignIn}
-              disabled={isLoading}
+              disabled={isLoading || connectionStatus !== 'connected'}
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign in with Google
