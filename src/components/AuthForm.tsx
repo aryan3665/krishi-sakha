@@ -15,8 +15,30 @@ export const AuthForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const { signIn, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Test Supabase connection
+    const testConnection = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Supabase connection error:', error);
+          setConnectionStatus('error');
+        } else {
+          console.log('Supabase connected successfully');
+          setConnectionStatus('connected');
+        }
+      } catch (err) {
+        console.error('Supabase connection test failed:', err);
+        setConnectionStatus('error');
+      }
+    };
+
+    testConnection();
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
