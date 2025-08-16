@@ -7,9 +7,11 @@ const corsHeaders = {
 };
 
 interface GenerateAdviceRequest {
-  cleaned_query_text: string;
+  cleaned_query_text?: string;
   detected_language?: string;
-  language: string;
+  language?: string;
+  prompt?: string; // New format for enhanced queries
+  model?: string;
 }
 
 serve(async (req) => {
