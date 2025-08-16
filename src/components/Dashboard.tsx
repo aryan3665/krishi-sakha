@@ -85,6 +85,7 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
 
   const sidebarItems = [
     { id: "home", label: "Dashboard", icon: Home },
+    { id: "realtime", label: "Real-Time Data", icon: BarChart3 },
     { id: "history", label: "Query History", icon: History },
     { id: "help", label: "Help & Guide", icon: HelpCircle },
     { id: "settings", label: "Settings", icon: Settings },
