@@ -32,7 +32,17 @@ export const VoiceInput = ({ onVoiceResult, language, isListening, setIsListenin
     recognition.maxAlternatives = 1;
     
     // Set language based on user preference
-    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
+    const languageMap: { [key: string]: string } = {
+      'hi': 'hi-IN',    // Hindi
+      'mr': 'mr-IN',    // Marathi
+      'bn': 'bn-IN',    // Bengali
+      'ta': 'ta-IN',    // Tamil
+      'te': 'te-IN',    // Telugu
+      'gu': 'gu-IN',    // Gujarati
+      'pa': 'pa-IN',    // Punjabi
+      'en': 'en-IN',    // English (India)
+    };
+    recognition.lang = languageMap[language] || 'en-IN';
 
     recognition.onstart = () => {
       console.log('Voice recognition started');
