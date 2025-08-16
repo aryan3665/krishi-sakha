@@ -52,20 +52,23 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
   const { queries, loading, submitQuery } = useQueries();
   const { toast } = useToast();
 
-  // Initialize real-time system when dashboard loads
+  // Initialize real-time system when dashboard loads (gracefully)
   useEffect(() => {
     const initializeSystem = async () => {
       try {
-        console.log('🚀 Initializing real-time agricultural data system...');
-        // The system auto-initializes via the import, but we can track it here
+        console.log('🚀 Checking real-time agricultural data system status...');
+        // Only check status, don't force initialization
         const status = await systemInitializer.getQuickStatus();
         console.log('📊 System status:', status);
       } catch (error) {
-        console.error('❌ Real-time system initialization error:', error);
+        console.warn('⚠️ Real-time system not yet available:', error);
+        // Don't show error to user, just log it
       }
     };
 
-    initializeSystem();
+    // Delay to let the app settle first
+    const timeoutId = setTimeout(initializeSystem, 2000);
+    return () => clearTimeout(timeoutId);
   }, []);
 
   const handleSignOut = async () => {
