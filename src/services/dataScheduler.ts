@@ -150,7 +150,7 @@ export class DataScheduler {
       console.log('🔄 Scheduled weather data fetch starting...');
       const data = await weatherDataFetcher.fetchWeatherData();
       this.status.lastWeatherUpdate = new Date().toISOString();
-      console.log(`✅ Weather data fetch completed - ${data.length} records`);
+      console.log(`�� Weather data fetch completed - ${data.length} records`);
     } catch (error) {
       console.error('❌ Scheduled weather data fetch failed:', error);
       this.status.errors.push(`Weather fetch failed: ${error}`);
@@ -363,6 +363,3 @@ export const dataScheduler = new DataScheduler({
   summaryInterval: 120, // 2 hours for summaries
   autoStart: true
 });
-
-// Export for manual control
-export { DataScheduler };
