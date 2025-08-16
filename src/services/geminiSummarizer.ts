@@ -51,7 +51,7 @@ Generate the summary now:`;
 
   async generateSummary(request: SummaryRequest): Promise<MarketSummary> {
     try {
-      console.log('🤖 Generating Gemini summary for:', request);
+      console.log('🤖 Generating summary for:', request);
 
       // Fetch relevant market and weather data
       const marketData = await this.getMarketData(request.location, request.crop);
@@ -61,27 +61,16 @@ Generate the summary now:`;
         return this.getEmptySummary();
       }
 
-      // Prepare data context for Gemini
-      const marketContext = this.formatMarketDataForPrompt(marketData);
-      const weatherContext = this.formatWeatherDataForPrompt(weatherData);
+      // Try offline-first approach with structured data
+      console.log('📊 Generating offline structured summary...');
+      const offlineSummary = this.generateOfflineStructuredSummary(marketData, weatherData, request.location);
 
-      // Create the prompt
-      const prompt = this.GEMINI_PROMPT
-        .replace('{MARKET_DATA}', marketContext)
-        .replace('{WEATHER_DATA}', weatherContext);
+      // Return offline summary immediately - no need to wait for Edge Function
+      console.log('✅ Using offline structured summary (more reliable)');
+      return offlineSummary;
 
-      // Call Gemini via Supabase Edge Function
-      const geminiResponse = await this.callGeminiAPI(prompt);
-
-      // Parse the response
-      const summary = this.parseGeminiResponse(geminiResponse, marketData, weatherData);
-
-      // Store the summary for caching
-      await this.storeSummary(summary, request);
-
-      return summary;
     } catch (error) {
-      console.error('❌ Failed to generate Gemini summary:', error);
+      console.error('❌ Failed to generate summary:', error);
       return this.getFallbackSummary(request);
     }
   }
