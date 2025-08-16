@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Sprout, 
-  Cloud, 
-  TrendingUp, 
-  Shield, 
-  MessageSquare, 
-  BarChart3, 
-  Leaf, 
+import {
+  Sprout,
+  Cloud,
+  TrendingUp,
+  Shield,
+  MessageSquare,
+  BarChart3,
+  Leaf,
   Sun,
   Smartphone,
   Globe,
@@ -15,12 +15,25 @@ import {
   CheckCircle,
   Star
 } from "lucide-react";
+import { TestimonialsMarquee } from "./TestimonialsMarquee";
+import { AppFunctionalityShowcase } from "./AppFunctionalityShowcase";
+import { WorkflowSteps } from "./WorkflowSteps";
+import { DetailedFooter } from "./DetailedFooter";
+import { useState } from "react";
 
 interface LandingPageProps {
   onGetStarted: () => void;
+  language?: string;
+  onLanguageChange?: (lang: string) => void;
 }
 
-export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
+export const LandingPage = ({ onGetStarted, language = "en", onLanguageChange = () => {} }: LandingPageProps) => {
+  const [currentLanguage, setCurrentLanguage] = useState(language);
+
+  const handleLanguageChange = (newLanguage: string) => {
+    setCurrentLanguage(newLanguage);
+    onLanguageChange(newLanguage);
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100">
       {/* Hero Section */}
@@ -184,130 +197,14 @@ export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
         </div>
       </section>
 
-      {/* How It Works Section */}
-      <section className="py-16 bg-green-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              How Krishi Sakha Works
-            </h3>
-            <p className="text-lg text-gray-600">
-              Get agricultural advice in three simple steps
-            </p>
-          </div>
+      {/* App Functionality Showcase */}
+      <AppFunctionalityShowcase />
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                1
-              </div>
-              <h4 className="text-xl font-semibold mb-3">Ask Your Question</h4>
-              <p className="text-gray-600">
-                Type or speak your question in any Indian language about crops, weather, prices, or farming techniques.
-              </p>
-            </div>
+      {/* Workflow Steps */}
+      <WorkflowSteps />
 
-            <div className="text-center">
-              <div className="bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                2
-              </div>
-              <h4 className="text-xl font-semibold mb-3">AI Processes Data</h4>
-              <p className="text-gray-600">
-                Our AI searches government databases, weather services, and market data to find the most relevant information.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                3
-              </div>
-              <h4 className="text-xl font-semibold mb-3">Get Instant Advice</h4>
-              <p className="text-gray-600">
-                Receive structured, actionable advice with confidence scores and data sources in your preferred language.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials/Social Proof */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              Trusted by Farmers Across India
-            </h3>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "Krishi Sakha helped me get better prices for my wheat crop. The market data is always up-to-date and accurate."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-green-600 font-semibold">RS</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Raj Singh</p>
-                    <p className="text-sm text-gray-500">Punjab</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "The weather predictions and pest alerts saved my cotton crop. This app is a game-changer for farmers."
-                </p>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-green-600 font-semibold">MP</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Meera Patel</p>
-                    <p className="text-sm text-gray-500">Gujarat</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                  ))}
-                </div>
-                <p className="text-gray-600 mb-4">
-                  "I can ask questions in Hindi and get detailed answers about government schemes. Very helpful!"
-                </p>
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-green-600 font-semibold">AK</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Amit Kumar</p>
-                    <p className="text-sm text-gray-500">Uttar Pradesh</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+      {/* Animated Testimonials Marquee */}
+      <TestimonialsMarquee />
 
       {/* Final CTA Section */}
       <section className="py-16 bg-green-600">
@@ -333,20 +230,8 @@ export const LandingPage = ({ onGetStarted }: LandingPageProps) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
-              <Sprout className="h-6 w-6 text-green-400" />
-              <span className="text-xl font-bold">Krishi Sakha</span>
-            </div>
-            <div className="text-sm text-gray-400">
-              © 2024 Krishi Sakha. Empowering farmers with AI-powered agricultural advice.
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Detailed Footer */}
+      <DetailedFooter language={currentLanguage} onLanguageChange={handleLanguageChange} />
     </div>
   );
 };
