@@ -141,26 +141,33 @@ User Query: ${queryText}`;
     const generatedText = data.candidates[0].content.parts[0].text;
     console.log('Generated text:', generatedText);
 
-    // Try to parse JSON response
+    // Handle response based on format
     let advice: string;
     let explanation: string;
 
-    try {
-      const parsed = JSON.parse(generatedText);
-      advice = parsed.advice || generatedText;
-      explanation = parsed.explanation || '';
-    } catch {
-      // If not JSON, treat as plain text advice
-      advice = generatedText;
-      explanation = 'AI-generated farming advice based on your query.';
+    if (prompt) {
+      // New format: return the full response as advice
+      advice = generatedText.trim();
+      explanation = 'Enhanced AI response with real-time data integration.';
+    } else {
+      // Old format: try to parse JSON response
+      try {
+        const parsed = JSON.parse(generatedText);
+        advice = parsed.advice || generatedText;
+        explanation = parsed.explanation || '';
+      } catch {
+        // If not JSON, treat as plain text advice
+        advice = generatedText;
+        explanation = 'AI-generated farming advice based on your query.';
+      }
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         advice: advice.trim(),
         explanation: explanation.trim()
-      }), 
-      { 
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       }
