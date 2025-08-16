@@ -262,14 +262,33 @@ ENHANCED RESPONSE:`;
 
       if (error) {
         console.error('Enhanced LLM call error:', error);
-        throw error;
+        // Return graceful fallback instead of throwing
+        return this.generateFallbackEnhancedResponse(prompt);
       }
 
-      return data.advice || 'Enhanced response generation failed.';
+      return data?.advice || this.generateFallbackEnhancedResponse(prompt);
     } catch (error) {
       console.error('Enhanced LLM call failed:', error);
-      return 'Enhanced response temporarily unavailable.';
+      return this.generateFallbackEnhancedResponse(prompt);
     }
+  }
+
+  private generateFallbackEnhancedResponse(prompt: string): string {
+    // Try to extract key information from the prompt
+    const queryMatch = prompt.match(/ORIGINAL QUERY:\s*([^\n]+)/i);
+    const query = queryMatch ? queryMatch[1].trim() : 'Agricultural query';
+
+    return `**🔍 Query:** ${query}
+
+📊 **Analysis**: AI enhancement temporarily unavailable. Providing basic guidance based on general agricultural knowledge.
+
+💡 **General Recommendations:**
+• Consult local agricultural extension officers for current conditions
+• Monitor weather forecasts and market trends regularly
+• Follow recommended farming practices for your region
+• Consider soil testing for optimal fertilizer application
+
+⚠️ **Note**: Enhanced real-time data integration is temporarily unavailable. Basic agricultural guidance provided. Please try again later for enhanced insights with current market and weather data.`;
   }
 
   private calculateEnhancedConfidence(baseConfidence: number, realTimeData: any): number {
