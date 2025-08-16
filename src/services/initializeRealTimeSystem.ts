@@ -198,12 +198,12 @@ export class SystemInitializer {
 // Export singleton instance
 export const systemInitializer = new SystemInitializer();
 
-// Auto-initialize when imported (with delay to avoid blocking)
-// Only run in browser environment and if not disabled
-if (typeof window !== 'undefined' && !import.meta.env.VITE_DISABLE_AUTO_INIT) {
+// Auto-initialization is disabled by default to prevent startup issues
+// To enable, set VITE_ENABLE_AUTO_INIT=true in your environment
+if (typeof window !== 'undefined' && import.meta.env.VITE_ENABLE_AUTO_INIT === 'true') {
   setTimeout(() => {
     systemInitializer.initializeAndDemo().catch(error => {
       console.error('Auto-initialization failed:', error);
     });
-  }, 3000);
+  }, 5000);
 }
