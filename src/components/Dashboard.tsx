@@ -30,6 +30,7 @@ import { LanguageSelector } from "./LanguageSelector";
 import { ThemeToggle } from "./ThemeToggle";
 import { QueryInput } from "./QueryInput";
 import { useQueries } from "@/hooks/useQueries";
+import { systemInitializer } from '@/services/initializeRealTimeSystem';
 
 // Lazy load components for better performance
 const AdviceCard = lazy(() => import("./AdviceCard").then(module => ({ default: module.AdviceCard })));
