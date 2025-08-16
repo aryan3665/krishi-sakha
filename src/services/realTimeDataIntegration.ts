@@ -255,17 +255,14 @@ ENHANCED RESPONSE:`;
   private async callEnhancedLLM(prompt: string): Promise<string> {
     try {
       // Use the existing Supabase Edge Function
-      const { data, error } = await fetch('/functions/v1/generate-advice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ prompt })
-      }).then(res => res.json());
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('generate-advice', {
+        body: { prompt }
+      });
 
       if (error) {
-        throw new Error(error.message);
+        console.error('Enhanced LLM call error:', error);
+        throw error;
       }
 
       return data.advice || 'Enhanced response generation failed.';
