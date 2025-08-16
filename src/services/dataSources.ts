@@ -89,6 +89,62 @@ export const DATA_SOURCES: DataSource[] = [
     updateFrequency: 'daily',
     dataFormat: 'json',
     isActive: true
+  },
+  {
+    id: 'enam',
+    name: 'eNAM (National Agriculture Market)',
+    description: 'Electronic National Agriculture Market prices',
+    baseUrl: 'https://api.enam.gov.in/api/market-data',
+    type: 'market',
+    region: 'national',
+    updateFrequency: 'daily',
+    dataFormat: 'json',
+    isActive: true
+  },
+  {
+    id: 'ncdex',
+    name: 'NCDEX Commodity Prices',
+    description: 'National Commodity & Derivatives Exchange commodity prices',
+    baseUrl: 'https://api.ncdex.com/commodity-prices',
+    type: 'market',
+    region: 'national',
+    updateFrequency: 'realtime',
+    dataFormat: 'json',
+    isActive: true
+  },
+  {
+    id: 'commodity_online',
+    name: 'CommodityOnline',
+    description: 'Commodity prices and market intelligence',
+    baseUrl: 'https://api.commodityonline.com/prices',
+    type: 'market',
+    region: 'national',
+    updateFrequency: 'daily',
+    dataFormat: 'json',
+    isActive: true
+  },
+  {
+    id: 'weather_api',
+    name: 'WeatherAPI',
+    description: 'Weather forecasting and climate data',
+    baseUrl: 'https://api.weatherapi.com/v1',
+    apiKey: import.meta.env.VITE_WEATHER_API_KEY,
+    type: 'weather',
+    region: 'national',
+    updateFrequency: 'hourly',
+    dataFormat: 'json',
+    isActive: true
+  },
+  {
+    id: 'ogd_platform',
+    name: 'Open Government Data (OGD) Platform',
+    description: 'Central repository for Indian government data including agricultural schemes and advisories',
+    baseUrl: 'https://api.data.gov.in/catalog',
+    type: 'general',
+    region: 'national',
+    updateFrequency: 'daily',
+    dataFormat: 'json',
+    isActive: true
   }
 ];
 
