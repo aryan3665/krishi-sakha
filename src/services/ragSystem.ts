@@ -296,7 +296,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा ��भी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -308,7 +308,7 @@ export class RetrievalAugmentedGeneration {
       formattedAnswer += `• pH: ${soilData.pH}\n`;
       if (soilData.recommendations) {
         soilData.recommendations.slice(0, 2).forEach((rec: string) => {
-          formattedAnswer += `��� ${rec}\n`;
+          formattedAnswer += `���� ${rec}\n`;
         });
       }
       formattedAnswer += `**${isHindi ? 'स्रोत' : 'Source'}: ${soilSource?.source} (${soilSource?.freshness || 'fresh'})**\n\n`;
@@ -317,7 +317,7 @@ export class RetrievalAugmentedGeneration {
     // Advisory Section
     if (advisoryData && advisoryData.advisories) {
       const advisorySource = sources.find(s => s.type === 'advisory');
-      formattedAnswer += isHindi ? '📋 **कृ���ि सलाह:**\n' : '📋 **Agricultural Advisory:**\n';
+      formattedAnswer += isHindi ? '📋 **कृषि सलाह:**\n' : '📋 **Agricultural Advisory:**\n';
       advisoryData.advisories.slice(0, 2).forEach((adv: any) => {
         formattedAnswer += `• **${adv.title}**: ${adv.content}\n`;
       });
@@ -358,7 +358,7 @@ export class RetrievalAugmentedGeneration {
     if (isHindi) {
       section += `• आपके प्रश्न का विश्लेषण करके विषय और स्थान की पहचान की गई\n`;
       section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
-      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प्राप्त हुई\n`;
+      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प��राप्त हुई\n`;
       section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
       section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
@@ -432,7 +432,7 @@ export class RetrievalAugmentedGeneration {
     if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
       // Case 1: Cannot understand query or system down
       fallbackAdvice += isHindi ?
-        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पंजाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं���ाब में कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
         '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
     } else {
       // Case 2: General guidance with suggestions
@@ -783,20 +783,40 @@ RESPONSE:`;
 
   private async callLLM(prompt: string): Promise<string> {
     try {
-      // Call Supabase Edge Function for AI generation
+      // Try to call Supabase Edge Function for AI generation
       const { data, error } = await supabase.functions.invoke('generate-advice', {
         body: { prompt }
       });
 
       if (error) {
-        console.error('LLM call error:', error);
-        return 'I apologize, but I cannot provide advice at the moment. Please try again later.';
+        console.warn('LLM call error, falling back to offline AI:', error);
+        return this.getOfflineLLMResponse(prompt);
       }
 
-      return data.advice || 'Unable to generate response.';
+      return data?.advice || this.getOfflineLLMResponse(prompt);
     } catch (error) {
-      console.error('Error calling LLM:', error);
-      return 'I apologize, but I cannot provide advice at the moment. Please try again later.';
+      console.warn('Error calling LLM, falling back to offline AI:', error);
+      return this.getOfflineLLMResponse(prompt);
+    }
+  }
+
+  private getOfflineLLMResponse(prompt: string): string {
+    try {
+      // Import offline AI service
+      const { offlineAIService } = require('./offlineAIService');
+
+      // Extract the actual query from the prompt
+      const queryMatch = prompt.match(/User Query:\s*([^\n]+)/i) ||
+                        prompt.match(/FARMER'S QUESTION:\s*([^\n]+)/i) ||
+                        prompt.match(/Query:\s*([^\n]+)/i);
+
+      const query = queryMatch ? queryMatch[1].trim() : prompt.slice(0, 100);
+
+      const response = offlineAIService.generateResponse(query, 'en');
+      return offlineAIService.formatStructuredResponse(response, query);
+    } catch (error) {
+      console.error('Offline AI also failed:', error);
+      return 'I apologize, but I cannot provide specific advice at the moment. For immediate assistance, please contact your local agricultural extension office or call the Kisan Call Center at 1800-180-1551.';
     }
   }
 
