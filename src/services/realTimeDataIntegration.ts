@@ -256,7 +256,6 @@ ENHANCED RESPONSE:`;
   private async callEnhancedLLM(prompt: string): Promise<string> {
     try {
       // Use the existing Supabase Edge Function
-      const { supabase } = await import('@/integrations/supabase/client');
       const { data, error } = await supabase.functions.invoke('generate-advice', {
         body: { prompt }
       });
