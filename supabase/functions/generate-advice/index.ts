@@ -42,12 +42,18 @@ serve(async (req) => {
       );
     }
 
-    // Determine response language
-    const responseLanguage = detected_language || language || 'English';
-    const isHindi = responseLanguage.toLowerCase().includes('hindi') || responseLanguage === 'hi';
-    
-    // Create contextual prompt for Indian farmers
-    const systemPrompt = `You are an expert agricultural advisor specializing in Indian farming practices. Provide concise, actionable advice for Indian farmers based on their queries. 
+    // Determine if this is a new format prompt or old format query
+    let systemPrompt: string;
+
+    if (prompt) {
+      // New format: use the prompt directly (it's already formatted)
+      systemPrompt = prompt;
+    } else {
+      // Old format: create contextual prompt for Indian farmers
+      const responseLanguage = detected_language || language || 'English';
+      const isHindi = responseLanguage.toLowerCase().includes('hindi') || responseLanguage === 'hi';
+
+      systemPrompt = `You are an expert agricultural advisor specializing in Indian farming practices. Provide concise, actionable advice for Indian farmers based on their queries.
 
 Guidelines:
 - Give practical, implementable advice suitable for Indian climate and soil conditions
@@ -61,7 +67,8 @@ Format your response as JSON with two fields:
 - "advice": Practical, actionable farming advice
 - "explanation": Brief explanation of why this advice works
 
-User Query: ${cleaned_query_text}`;
+User Query: ${queryText}`;
+    }
 
     console.log('Sending request to Gemini API...');
     
