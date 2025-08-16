@@ -1,25 +1,6 @@
 import { useState } from "react";
-import { QueryInput } from "./QueryInput";
-import { AdviceCard } from "./AdviceCard";
-import { EnhancedAdviceCard } from "./EnhancedAdviceCard";
-import { OfflineStatus } from "./OfflineStatus";
-import { DemoController } from "./DemoController";
-import { DemoModeHandler } from "./DemoModeHandler";
-import { SystemHealthIndicator } from "./SystemHealthIndicator";
-import { SystemStatus } from "./SystemStatus";
-import { SourceReference } from "@/services/ragSystem";
-import { systemHealthChecker } from "@/services/systemHealth";
-import { QueryHistory } from "./QueryHistory";
-import { BottomNavigation } from "./BottomNavigation";
-import { LanguageSelector } from "./LanguageSelector";
-import { ThemeToggle } from "./ThemeToggle";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Sprout, Leaf, Sun, History as HistoryIcon, HelpCircle, Settings, LogOut, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getTranslation, getStringTranslation } from "@/utils/translations";
-import { useAuth } from "@/hooks/useAuth";
-import { useQueries } from "@/hooks/useQueries";
+import { Dashboard } from "./Dashboard";
+import { getStringTranslation } from "@/utils/translations";
 interface HistoryItem {
   id: string;
   query: string;
