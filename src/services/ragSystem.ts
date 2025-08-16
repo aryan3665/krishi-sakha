@@ -40,9 +40,13 @@ export class RetrievalAugmentedGeneration {
       const cached = offlineCache.getCachedResponse(query, language);
       if (cached) {
         console.log('Using cached response');
+        const cacheDate = cached.timestamp instanceof Date ?
+          cached.timestamp.toLocaleDateString() :
+          new Date(cached.timestamp).toLocaleDateString();
+
         return this.formatFarmerFriendlyResponse({
           ...cached.response,
-          disclaimer: `📅 Cached response from ${cached.timestamp.toLocaleDateString()}. ${cached.response.disclaimer || ''}`
+          disclaimer: `📅 Cached response from ${cacheDate}. ${cached.response.disclaimer || ''}`
         }, cached.response.sources, language, query);
       }
 
@@ -292,7 +296,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
+        '⚠️ बाजार डेटा ��भी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -313,7 +317,7 @@ export class RetrievalAugmentedGeneration {
     // Advisory Section
     if (advisoryData && advisoryData.advisories) {
       const advisorySource = sources.find(s => s.type === 'advisory');
-      formattedAnswer += isHindi ? '📋 **कृषि सलाह:**\n' : '📋 **Agricultural Advisory:**\n';
+      formattedAnswer += isHindi ? '📋 **कृ���ि सलाह:**\n' : '📋 **Agricultural Advisory:**\n';
       advisoryData.advisories.slice(0, 2).forEach((adv: any) => {
         formattedAnswer += `• **${adv.title}**: ${adv.content}\n`;
       });
