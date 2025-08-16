@@ -310,7 +310,14 @@ ENHANCED RESPONSE:`;
     const queryMatch = prompt.match(/ORIGINAL QUERY:\s*([^\n]+)/i);
     const query = queryMatch ? queryMatch[1].trim() : 'Agricultural query';
 
-    return `**🔍 Query:** ${query}
+    // Use offline AI service for better fallback
+    try {
+      const offlineResponse = offlineAIService.generateResponse(query, 'en');
+      return offlineAIService.formatStructuredResponse(offlineResponse, query);
+    } catch (error) {
+      console.error('Offline AI service also failed:', error);
+
+      return `**🔍 Query:** ${query}
 
 📊 **Analysis**: AI enhancement temporarily unavailable. Providing basic guidance based on general agricultural knowledge.
 
@@ -321,6 +328,7 @@ ENHANCED RESPONSE:`;
 • Consider soil testing for optimal fertilizer application
 
 ⚠️ **Note**: Enhanced real-time data integration is temporarily unavailable. Basic agricultural guidance provided. Please try again later for enhanced insights with current market and weather data.`;
+    }
   }
 
   private calculateEnhancedConfidence(baseConfidence: number, realTimeData: any): number {
