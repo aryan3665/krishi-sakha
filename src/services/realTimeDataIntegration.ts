@@ -35,36 +35,67 @@ export class RealTimeDataIntegration {
     try {
       // Step 1: Get the base RAG response
       const baseResponse = await ragSystem.generateAdvice(query.query, query.language || 'en');
-      
+
       // Step 2: Check if query needs real-time data enhancement
       const needsRealTimeData = this.shouldEnhanceWithRealTimeData(query.query, query);
-      
+
       if (!needsRealTimeData) {
         console.log('📝 Query does not need real-time data enhancement');
         return baseResponse as EnhancedRAGResponse;
       }
-      
-      // Step 3: Fetch relevant real-time data
-      const realTimeData = await this.fetchRelevantRealTimeData(query);
-      
-      // Step 4: Generate enhanced response with real-time data
-      const enhancedResponse = await this.generateEnhancedResponse(
-        query, 
-        baseResponse, 
-        realTimeData
-      );
-      
-      return enhancedResponse;
-      
+
+      // Step 3: Try to fetch relevant real-time data (with fallback)
+      let realTimeData;
+      try {
+        realTimeData = await this.fetchRelevantRealTimeData(query);
+      } catch (dataError) {
+        console.warn('⚠️ Real-time data fetch failed, using base response:', dataError);
+        return {
+          ...baseResponse,
+          disclaimer: `${baseResponse.disclaimer || ''} Real-time data temporarily unavailable.`
+        } as EnhancedRAGResponse;
+      }
+
+      // Step 4: Try to generate enhanced response (with fallback)
+      try {
+        const enhancedResponse = await this.generateEnhancedResponse(
+          query,
+          baseResponse,
+          realTimeData
+        );
+        return enhancedResponse;
+      } catch (enhanceError) {
+        console.warn('⚠️ Response enhancement failed, returning base response with data:', enhanceError);
+        return {
+          ...baseResponse,
+          realTimeData,
+          disclaimer: `${baseResponse.disclaimer || ''} Real-time data available but enhancement temporarily unavailable.`
+        } as EnhancedRAGResponse;
+      }
+
     } catch (error) {
       console.error('❌ Failed to enhance query with real-time data:', error);
-      
-      // Fallback to base RAG response
-      const fallbackResponse = await ragSystem.generateAdvice(query.query, query.language || 'en');
-      return {
-        ...fallbackResponse,
-        disclaimer: `${fallbackResponse.disclaimer || ''} Real-time data temporarily unavailable.`
-      } as EnhancedRAGResponse;
+
+      // Ultimate fallback: try to get base RAG response
+      try {
+        const fallbackResponse = await ragSystem.generateAdvice(query.query, query.language || 'en');
+        return {
+          ...fallbackResponse,
+          disclaimer: `${fallbackResponse.disclaimer || ''} Real-time data temporarily unavailable.`
+        } as EnhancedRAGResponse;
+      } catch (ragError) {
+        console.error('❌ Even base RAG response failed:', ragError);
+
+        // Final fallback: return manual response
+        return {
+          answer: `**🔍 Query:** ${query.query}\n\n❌ **Service Temporarily Unavailable**\n\nOur AI advisory service is currently experiencing technical difficulties. Please try again in a few minutes.\n\nFor immediate assistance:\n• Contact your local agricultural extension office\n• Call Kisan Call Center: 1800-180-1551\n• Visit nearest Krishi Vigyan Kendra`,
+          sources: [],
+          confidence: 0.1,
+          factualBasis: 'low' as const,
+          generatedContent: ['Manual fallback response'],
+          disclaimer: 'Service temporarily unavailable. This is a fallback response.'
+        };
+      }
     }
   }
 
@@ -75,7 +106,7 @@ export class RealTimeDataIntegration {
     const realTimeKeywords = [
       // Market/Price related
       'price', 'rate', 'cost', 'market', 'mandi', 'selling',
-      'भाव', 'कीमत', 'दाम', 'मंडी', 'बाजार',
+      'भाव', 'क��मत', 'दाम', 'मंडी', 'बाजार',
       
       // Weather related  
       'weather', 'temperature', 'rain', 'rainfall', 'climate',
