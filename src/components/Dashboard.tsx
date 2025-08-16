@@ -230,6 +230,13 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
           </div>
         );
 
+      case "realtime":
+        return (
+          <Suspense fallback={<div className="animate-pulse bg-gray-200 h-48 rounded-lg"></div>}>
+            <RealTimeDataDashboard />
+          </Suspense>
+        );
+
       case "history":
         return (
           <div className="space-y-4">
