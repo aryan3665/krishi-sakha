@@ -35,6 +35,7 @@ import { useQueries } from "@/hooks/useQueries";
 const AdviceCard = lazy(() => import("./AdviceCard").then(module => ({ default: module.AdviceCard })));
 const EnhancedAdviceCard = lazy(() => import("./EnhancedAdviceCard").then(module => ({ default: module.EnhancedAdviceCard })));
 const QueryHistory = lazy(() => import("./QueryHistory").then(module => ({ default: module.QueryHistory })));
+const RealTimeDataDashboard = lazy(() => import("./RealTimeDataDashboard").then(module => ({ default: module.RealTimeDataDashboard })));
 
 interface DashboardProps {
   language: string;
