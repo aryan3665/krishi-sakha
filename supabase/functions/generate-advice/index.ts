@@ -21,11 +21,14 @@ serve(async (req) => {
   }
 
   try {
-    const { cleaned_query_text, detected_language, language }: GenerateAdviceRequest = await req.json();
+    const { cleaned_query_text, detected_language, language, prompt, model }: GenerateAdviceRequest = await req.json();
 
-    if (!cleaned_query_text) {
+    // Support both old format (cleaned_query_text) and new format (prompt)
+    const queryText = prompt || cleaned_query_text;
+
+    if (!queryText) {
       return new Response(
-        JSON.stringify({ error: 'Query text is required' }), 
+        JSON.stringify({ error: 'Query text or prompt is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
