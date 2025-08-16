@@ -187,7 +187,7 @@ Generate the summary now:`;
     try {
       // Use the existing Supabase Edge Function for AI calls
       const { data, error } = await supabase.functions.invoke('generate-advice', {
-        body: { 
+        body: {
           prompt,
           model: 'gemini' // Specify Gemini model if the edge function supports it
         }
@@ -195,14 +195,30 @@ Generate the summary now:`;
 
       if (error) {
         console.error('Gemini API call error:', error);
-        throw error;
+        // Don't throw here, return fallback instead
+        return this.generateFallbackSummary(prompt);
       }
 
-      return data.advice || data.response || 'Unable to generate summary.';
+      return data?.advice || data?.response || this.generateFallbackSummary(prompt);
     } catch (error) {
       console.error('Error calling Gemini via Edge Function:', error);
-      throw error;
+      // Return fallback instead of throwing
+      return this.generateFallbackSummary(prompt);
     }
+  }
+
+  private generateFallbackSummary(prompt: string): string {
+    // Extract any location info from prompt if possible
+    const locationMatch = prompt.match(/location[:\s]+([^,\n]+)/i);
+    const location = locationMatch ? locationMatch[1].trim() : 'India';
+
+    return `📢 Market Update (${location}): Agricultural data summary temporarily unavailable due to system maintenance.
+
+| Crop | Mandi | Price (₹/kg) | Trend |
+|------|-------|--------------|-------|
+| - | - | Service unavailable | - |
+
+🌦️ Weather Impact: Weather analysis temporarily unavailable. Please check back shortly for updated market and weather insights.`;
   }
 
   private parseGeminiResponse(response: string, marketData: MarketDataPoint[], weatherData: WeatherDataPoint[]): MarketSummary {
