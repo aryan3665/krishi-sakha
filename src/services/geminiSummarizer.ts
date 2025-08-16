@@ -196,6 +196,80 @@ Generate the summary now:`;
     }
   }
 
+  private generateOfflineStructuredSummary(marketData: any[], weatherData: any[], location?: string): MarketSummary {
+    const today = new Date().toLocaleDateString('en-IN');
+    const loc = location || 'India';
+
+    let headline = `📢 Market Update (${loc}, ${today}): `;
+
+    if (marketData.length > 0) {
+      const totalCrops = marketData.length;
+      const risingTrends = marketData.filter(item => item.trend === 'rising').length;
+      const fallingTrends = marketData.filter(item => item.trend === 'falling').length;
+
+      if (risingTrends > fallingTrends) {
+        headline += `${totalCrops} crops showing mostly rising price trends.`;
+      } else if (fallingTrends > risingTrends) {
+        headline += `${totalCrops} crops showing mostly declining price trends.`;
+      } else {
+        headline += `${totalCrops} crops showing mixed price trends.`;
+      }
+
+      // Add specific crop mention
+      const sampleCrop = marketData[0];
+      const pricePerKg = (sampleCrop.price_per_quintal / 100).toFixed(1);
+      headline += ` ${sampleCrop.crop} trading at ₹${pricePerKg}/kg.`;
+    } else {
+      headline += 'Market data collection in progress.';
+    }
+
+    // Generate market table
+    let marketTable = '| Crop | Mandi | Price (₹/kg) | Trend |\n|------|-------|--------------|-------|\n';
+
+    if (marketData.length > 0) {
+      marketData.slice(0, 8).forEach(item => {
+        const pricePerKg = (item.price_per_quintal / 100).toFixed(1);
+        const trendIcon = item.trend === 'rising' ? '📈' :
+                         item.trend === 'falling' ? '📉' : '➡️';
+        const trend = `${trendIcon} ${item.trend || 'Stable'}`;
+        marketTable += `| ${item.crop} | ${item.mandi} | ${pricePerKg} | ${trend} |\n`;
+      });
+    } else {
+      marketTable += '| - | - | Data collection in progress | - |\n';
+    }
+
+    // Generate weather impact
+    let weatherImpact = '🌦️ Weather Impact: ';
+    if (weatherData.length > 0) {
+      const avgTemp = Math.round(weatherData.reduce((sum, w) => sum + w.temp_c, 0) / weatherData.length);
+      const totalRainfall = weatherData.reduce((sum, w) => sum + w.rainfall_mm, 0);
+      const avgHumidity = Math.round(weatherData.reduce((sum, w) => sum + (w.humidity || 0), 0) / weatherData.length);
+
+      weatherImpact += `Current average temperature ${avgTemp}°C with ${avgHumidity}% humidity. `;
+
+      if (totalRainfall > 5) {
+        weatherImpact += `Recent rainfall (${totalRainfall.toFixed(1)}mm) may impact transportation and storage of perishable crops.`;
+      } else if (avgTemp > 35) {
+        weatherImpact += 'High temperatures may stress crops and increase water requirements.';
+      } else if (avgTemp < 15) {
+        weatherImpact += 'Cool weather conditions favorable for Rabi crops and storage.';
+      } else {
+        weatherImpact += 'Weather conditions are generally favorable for farming activities.';
+      }
+    } else {
+      weatherImpact += 'Weather monitoring in progress for agricultural impact analysis.';
+    }
+
+    return {
+      headline,
+      marketTable,
+      weatherImpact,
+      confidence: 0.85, // High confidence for structured data
+      lastUpdated: new Date().toISOString(),
+      dataPoints: marketData.length + weatherData.length
+    };
+  }
+
   private generateFallbackSummary(prompt: string): string {
     // Extract any location info from prompt if possible
     const locationMatch = prompt.match(/location[:\s]+([^,\n]+)/i);
