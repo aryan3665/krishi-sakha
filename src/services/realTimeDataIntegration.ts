@@ -3,6 +3,7 @@ import { weatherDataFetcher } from './weatherDataFetcher';
 import { geminiSummarizer } from './geminiSummarizer';
 import { dataScheduler } from './dataScheduler';
 import { ragSystem } from './ragSystem';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface RealTimeQuery {
   query: string;
