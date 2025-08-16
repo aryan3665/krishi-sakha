@@ -223,4 +223,30 @@ All colors MUST be HSL.
     border: 1px solid hsl(var(--border) / 0.3);
     box-shadow: 0 8px 32px hsl(var(--primary) / 0.1);
   }
+
+  /* Marquee Animation */
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  .animate-marquee {
+    animation: marquee linear infinite;
+  }
+
+  .animation-paused {
+    animation-play-state: paused;
+  }
+
+  /* Line clamp utility */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
