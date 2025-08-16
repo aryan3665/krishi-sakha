@@ -4,6 +4,7 @@ import { geminiSummarizer } from './geminiSummarizer';
 import { dataScheduler } from './dataScheduler';
 import { ragSystem } from './ragSystem';
 import { supabase } from '@/integrations/supabase/client';
+import { offlineAIService } from './offlineAIService';
 
 export interface RealTimeQuery {
   query: string;
@@ -106,7 +107,7 @@ export class RealTimeDataIntegration {
     const realTimeKeywords = [
       // Market/Price related
       'price', 'rate', 'cost', 'market', 'mandi', 'selling',
-      'भाव', 'क��मत', 'दाम', 'मंडी', 'बाजार',
+      'भाव', 'कीमत', 'दाम', 'मंडी', 'बाजार',
       
       // Weather related  
       'weather', 'temperature', 'rain', 'rainfall', 'climate',
