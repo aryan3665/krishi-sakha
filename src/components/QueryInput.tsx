@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VoiceInput from "./VoiceInput";
+import { DemoQuestionsShowcase } from "./DemoQuestionsShowcase";
 import { processLanguageQuery } from "@/utils/languageProcessor";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, HelpCircle } from "lucide-react";
 import { getTranslation, getStringTranslation, translations } from "@/utils/translations";
 
 interface QueryInputProps {
