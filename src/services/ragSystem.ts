@@ -80,7 +80,50 @@ export class RetrievalAugmentedGeneration {
         return this.getFallbackAdvisory(query, language, 'Invalid query format');
       }
 
-      // **NEW APPROACH: LLM-First with Selective Grounding**
+      // **PRIORITY: Handle Price Queries with Real-Time Data**
+      if (RealTimeMandiPriceFetcher.isPriceQuery(processedQuery)) {
+        console.log('💰 Detected price query - fetching real-time mandi data...');
+        const { crop, location } = RealTimeMandiPriceFetcher.extractCropAndLocation(processedQuery);
+
+        if (crop && location) {
+          const priceData = await mandiPriceFetcher.fetchRealTimePrices(crop, location);
+          console.log(`💰 Price data result: Found=${priceData.found}, Prices=${priceData.prices.length}`);
+
+          let priceResponse: RAGResponse;
+
+          if (priceData.found) {
+            // Real price data found
+            priceResponse = {
+              answer: this.formatPriceResponse(priceData, languageResult.originalQuery),
+              sources: this.createPriceSources(priceData),
+              confidence: 0.95,
+              factualBasis: 'high',
+              generatedContent: [],
+              disclaimer: 'Live market data - prices may vary throughout the day'
+            };
+          } else {
+            // No price data found - be honest
+            priceResponse = {
+              answer: this.formatNoPriceDataResponse(priceData, languageResult.originalQuery),
+              sources: [],
+              confidence: 0.3,
+              factualBasis: 'low',
+              generatedContent: [],
+              disclaimer: 'No current price data available for requested crop and location'
+            };
+          }
+
+          // Always validate price responses with Gemini
+          return await this.validateWithGemini(
+            priceResponse.answer,
+            priceResponse.sources,
+            languageResult,
+            processedQuery
+          );
+        }
+      }
+
+      // **STANDARD APPROACH: LLM-First with Selective Grounding for non-price queries**
 
       // Step 2: Generate initial LLM response (without grounding)
       console.log('🤖 Generating initial LLM response...');
@@ -418,7 +461,7 @@ export class RetrievalAugmentedGeneration {
     let response = `**${query}**\n\n`;
 
     response += isHindi ?
-      '❓ **प्रश्न का पूरा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देन�� के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
+      '❓ **प्रश्न का प���रा उत्तर नहीं मिल सका**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देन�� के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n' :
       '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n';
 
     response += isHindi ? '📝 **आप ये सवाल पूछ सकते हैं:**\n' : '**You can try asking:**\n';
@@ -452,7 +495,7 @@ export class RetrievalAugmentedGeneration {
     if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
       // Case 1: Cannot understand query or system down
       fallbackAdvice += isHindi ?
-        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब म��ं चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं���ाब म���ं कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवा��� देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब म��ं चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं���ाब म���ं कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
         '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
     } else {
       // Case 2: General guidance with suggestions
