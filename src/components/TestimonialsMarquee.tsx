@@ -53,7 +53,7 @@ const testimonials: Testimonial[] = [
   },
   {
     id: "6",
-    text: "मराठी भाषे��� प्रश्न विचारता येतो आणि तत्काळ उत्तर मिळते. शेतकऱ्यांसाठी खरोखर उपयुक्त ॲप.",
+    text: "मराठी भाषेत प्रश्न विचारता येतो आणि तत्काळ उत्तर मिळते. शेतकऱ्यांसाठी खरोखर उपयुक्त ॲप.",
     author: "संजय पाटील",
     location: "महाराष्ट्र",
     language: "मराठी",
@@ -186,31 +186,6 @@ export const TestimonialsMarquee = () => {
         </div>
       )}
 
-      <style jsx>{`
-        @keyframes marquee {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-100%);
-          }
-        }
-
-        .animate-marquee {
-          animation: marquee linear infinite;
-        }
-
-        .animation-paused {
-          animation-play-state: paused;
-        }
-
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
     </div>
   );
 };
