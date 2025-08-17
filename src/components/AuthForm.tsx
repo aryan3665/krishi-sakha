@@ -286,6 +286,8 @@ export const AuthForm = ({ onBackToLanding }: AuthFormProps) => {
                       }}
                     />
 
+                    <DemoUserTest />
+
                     <form onSubmit={handleSignIn} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="signin-email">Email</Label>
