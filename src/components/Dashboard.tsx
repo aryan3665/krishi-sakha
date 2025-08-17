@@ -194,7 +194,19 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <QueryInput onSubmit={generateAdvice} language={language} isLoading={loading} />
+                <QueryInput
+                  onSubmit={generateAdvice}
+                  language={language}
+                  isLoading={loading}
+                  onLanguageDetected={(detectedLang) => {
+                    if (detectedLang !== language) {
+                      toast({
+                        title: "🗣️ Language Detected",
+                        description: `Detected: ${detectedLang.toUpperCase()}. Query processed in detected language.`,
+                      });
+                    }
+                  }}
+                />
               </CardContent>
             </Card>
 
