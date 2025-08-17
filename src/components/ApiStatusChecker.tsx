@@ -30,6 +30,7 @@ interface ApiService {
 export const ApiStatusChecker = () => {
   const [services, setServices] = useState<ApiService[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showGeminiHelper, setShowGeminiHelper] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
