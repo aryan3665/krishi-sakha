@@ -243,8 +243,10 @@ export class GeminiValidator {
 
   private addStructuredFormat(response: string, request: GeminiValidationRequest): string {
     const topic = this.extractTopic(request.translatedQuery);
-    
-    return `🌾 **${topic} Advisory**
+
+    return `🔍 **Query:** ${request.originalQuery}
+
+🌾 **${topic} Advisory**
 
 💡 **Key Recommendations:**
 ${response}
