@@ -423,8 +423,8 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
       <div className="flex">
         {/* Sidebar */}
         <aside className={`
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} 
-          lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r transition-transform duration-200 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 fixed lg:sticky lg:top-16 inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r transition-transform duration-200 ease-in-out h-screen lg:h-[calc(100vh-4rem)]
         `}>
           <div className="flex items-center justify-between p-4 lg:hidden">
             <span className="font-semibold text-green-800">Navigation</span>
