@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { GeminiApiHelper } from './GeminiApiHelper';
 
 interface ApiService {
   name: string;
