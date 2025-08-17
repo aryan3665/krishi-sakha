@@ -391,23 +391,9 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
             </div>
           </div>
 
-          {/* Center - Search (hidden on mobile) */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Ask about crops, weather, prices..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    generateAdvice(searchQuery);
-                    setSearchQuery('');
-                  }
-                }}
-              />
-            </div>
+          {/* Center - App Title */}
+          <div className="hidden md:flex flex-1 justify-center">
+            <h2 className="text-lg font-semibold text-green-800">AI-Powered Agricultural Advisor</h2>
           </div>
 
           {/* Right Side - User Actions */}
@@ -424,8 +410,7 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
             
             <div className="flex items-center gap-2">
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium">{user?.user_metadata?.full_name?.split(' ')[0] || 'User'}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+                <p className="text-sm font-medium">{user?.user_metadata?.full_name?.split(' ')[0] || 'Farmer'}</p>
               </div>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
