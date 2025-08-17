@@ -35,7 +35,8 @@ export const createDemoUserIfNotExists = async () => {
       options: {
         data: {
           full_name: DEMO_CREDENTIALS.fullName
-        }
+        },
+        emailRedirectTo: undefined // Disable email confirmation for demo user
       }
     });
 
