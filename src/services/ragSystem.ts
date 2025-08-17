@@ -4,6 +4,8 @@ import { preprocessQuery } from '@/utils/queryPreprocessor';
 import { QueryContext } from './dataSources';
 import { offlineCache } from './offlineCache';
 import { offlineAIService } from './offlineAIService';
+import { geminiValidator, GeminiValidationRequest } from './geminiValidator';
+import { processLanguageQuery } from '@/utils/languageProcessor';
 
 export interface RAGResponse {
   answer: string;
@@ -36,19 +38,28 @@ export class RetrievalAugmentedGeneration {
     // Step 0: System Health Check
     await this.checkSystemHealth();
 
+    // Step 1: Enhanced Language Processing
+    const languageResult = processLanguageQuery(query);
+    console.log(`🗣️ Language processing: ${languageResult.detectedLanguage} (${(languageResult.confidence * 100).toFixed(0)}% confidence)`);
+
+    // Use the translated query for processing, but keep original for display
+    const processedQuery = languageResult.translatedQuery || query;
+    const detectedLanguage = languageResult.detectedLanguage || language;
+
     try {
-      // Check for cached response first
-      const cached = offlineCache.getCachedResponse(query, language);
+      // Check for cached response first (using translated query for better matching)
+      const cached = offlineCache.getCachedResponse(processedQuery, language);
       if (cached) {
         console.log('Using cached response');
         const cacheDate = cached.timestamp instanceof Date ?
           cached.timestamp.toLocaleDateString() :
           new Date(cached.timestamp).toLocaleDateString();
 
-        return this.formatFarmerFriendlyResponse({
+        // Always validate cached responses through Gemini
+        return await this.validateWithGemini({
           ...cached.response,
           disclaimer: `📅 Cached response from ${cacheDate}. ${cached.response.disclaimer || ''}`
-        }, cached.response.sources, language, query);
+        }, cached.response.sources, languageResult, processedQuery);
       }
 
       // Check if online for fresh data
@@ -297,7 +308,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद में पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -361,7 +372,7 @@ export class RetrievalAugmentedGeneration {
       section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
       section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प��राप्त ��ुई\n`;
       section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
-      section += `• विश���वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
+      section += `• वि������वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
       if (sources.some(s => s.data?.missingDataNote)) {
         section += `• कुछ डेटा अनु��लब्ध होने पर पारदर्शी सूचना दी गई\n`;
@@ -798,6 +809,43 @@ RESPONSE:`;
     } catch (error) {
       console.warn('Error calling LLM, falling back to offline AI:', error);
       return this.getOfflineLLMResponse(prompt);
+    }
+  }
+
+  private async validateWithGemini(
+    candidateResponse: string,
+    sources: SourceReference[],
+    languageResult: any,
+    processedQuery: string
+  ): Promise<RAGResponse> {
+    try {
+      const validationRequest: GeminiValidationRequest = {
+        originalQuery: languageResult.originalQuery,
+        translatedQuery: languageResult.translatedQuery,
+        detectedLanguage: languageResult.detectedLanguage,
+        candidateResponse: candidateResponse,
+        apiDataSources: sources.map(s => ({ source: s.source, type: s.type, confidence: s.confidence })),
+        confidence: Math.max(...sources.map(s => s.confidence), 0.5)
+      };
+
+      const validation = await geminiValidator.validateAndEnhanceResponse(validationRequest);
+
+      console.log(`✅ Gemini validation complete: ${validation.isAccurate ? 'Accurate' : 'Enhanced'}, ${validation.isComplete ? 'Complete' : 'Improved'}`);
+
+      return {
+        answer: validation.enhancedResponse,
+        sources: sources,
+        confidence: validation.confidence,
+        factualBasis: validation.factualBasis,
+        generatedContent: validation.corrections || [],
+        disclaimer: validation.disclaimer || this.generateDisclaimer(validation.factualBasis, validation.confidence)
+      };
+
+    } catch (error) {
+      console.error('Gemini validation failed, using original response:', error);
+
+      // Fallback to original response with offline enhancement
+      return this.formatFarmerFriendlyResponse(candidateResponse, sources, languageResult.detectedLanguage, processedQuery);
     }
   }
 
