@@ -8,6 +8,9 @@ import { ThemeProvider } from "./providers/ThemeProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
+// Run demo user setup immediately when app loads
+import "./utils/setupDemoUserNow";
+
 const queryClient = new QueryClient();
 
 const App = () => (
