@@ -104,13 +104,8 @@ export const ApiStatusChecker = () => {
 
         if (error.message?.includes('500') || error.message?.includes('not found')) {
           message = 'GEMINI_API_KEY not configured in Edge Functions';
-          action = () => {
-            toast({
-              title: "Configuration Required",
-              description: "Set the GEMINI_API_KEY environment variable in your Supabase Edge Functions",
-            });
-          };
-          actionLabel = 'Configuration Help';
+          action = () => setShowGeminiHelper(true);
+          actionLabel = 'Fix Configuration';
         }
 
         setServices(prev => prev.map(service => 
