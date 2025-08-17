@@ -35,6 +35,21 @@ export const DEMO_QUESTIONS: DemoQuestion[] = [
     confidence: 0.95
   },
 
+  // Additional practical farming question
+  {
+    patterns: [
+      'when should i plant tomatoes',
+      'best time to plant tomatoes',
+      'tomato planting season',
+      'tomato cultivation timing',
+      'when to sow tomato seeds'
+    ],
+    answer: 'The best time to plant tomatoes is during the rabi season (October-November) or summer season (January-February), depending on your region. Ensure soil temperature is above 15°C for optimal germination.',
+    language: 'en',
+    category: 'farming',
+    confidence: 0.95
+  },
+
   // Hindi Questions
   {
     patterns: [
@@ -106,7 +121,7 @@ export class DemoQuestionHandler {
     const similarity = (commonWords.length * 2) / (words1.length + words2.length);
     
     // Boost similarity for key terms
-    const keyTerms = ['weather', 'price', 'mandi', 'धान', 'खाद', 'योजना', 'किसान'];
+    const keyTerms = ['weather', 'price', 'mandi', 'धान', 'खाद', 'योजना', 'कि���ान'];
     const hasKeyTerms = keyTerms.some(term => 
       normalized1.includes(term) && normalized2.includes(term)
     );
