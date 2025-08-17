@@ -359,7 +359,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृप���ा बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -852,7 +852,14 @@ RESPONSE:`;
       });
 
       if (error) {
-        console.warn('LLM call error, falling back to offline AI:', error);
+        console.warn('⚠️ LLM service unavailable, using offline AI:', error.message || error);
+
+        // Log specific error guidance
+        if (error.message?.includes('500')) {
+          console.warn('🔑 Configuration needed: GEMINI_API_KEY not set in Edge Functions');
+        }
+
+        console.log('🤖 Using offline AI service instead...');
         return this.getOfflineLLMResponse(prompt);
       }
 
