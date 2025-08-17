@@ -41,7 +41,7 @@ const SECTION_EMOJIS = {
 };
 
 const TOPIC_KEYWORDS = {
-  weather: ['weather', 'rain', 'temperature', 'climate', 'मौसम', 'बारिश', 'तापमान'],
+  weather: ['weather', 'rain', 'temperature', 'climate', 'मौसम', 'बारिश', 'तापमा��'],
   market: ['price', 'market', 'sell', 'buy', 'cost', 'दाम', 'कीमत', 'बाज़ार', 'मंडी'],
   pest: ['pest', 'disease', 'insect', 'bug', 'कीट', 'रोग', 'बीमारी'],
   irrigation: ['water', 'irrigation', 'drip', 'sprinkler', 'पानी', 'सिंचाई'],
@@ -270,12 +270,13 @@ function getTopicTitle(topic: string, language: string): string {
 }
 
 function generateFormattedText(sections: ResponseSection[], metadata: ResponseMetadata, language: string): string {
-  let formatted = '';
-  
+  // Always start with the original query
+  let formatted = `🔍 **Query:** ${metadata.originalQuery}\n\n`;
+
   for (const section of sections) {
     // Add section header
     formatted += `${section.emoji} **${section.title}**\n\n`;
-    
+
     // Add section content
     if (section.content.length > 0) {
       for (const item of section.content) {
@@ -284,10 +285,10 @@ function generateFormattedText(sections: ResponseSection[], metadata: ResponseMe
       formatted += '\n';
     }
   }
-  
+
   // Add metadata footer
   formatted += generateMetadataFooter(metadata, language);
-  
+
   return formatted.trim();
 }
 
