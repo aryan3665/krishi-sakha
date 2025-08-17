@@ -174,6 +174,8 @@ Generate the summary now:`;
 
   private async callGeminiAPI(prompt: string): Promise<string> {
     try {
+      console.log('🤖 Attempting to call Gemini API via Edge Function...');
+
       // Use the existing Supabase Edge Function for AI calls
       const { data, error } = await supabase.functions.invoke('generate-advice', {
         body: {
@@ -183,15 +185,28 @@ Generate the summary now:`;
       });
 
       if (error) {
-        console.error('Gemini API call error:', error);
-        // Don't throw here, return fallback instead
+        console.warn('⚠️ Gemini API call failed:', error.message || error);
+
+        // Log specific error types for debugging
+        if (error.message?.includes('500')) {
+          console.warn('🔑 Likely cause: GEMINI_API_KEY not configured in Edge Functions');
+        } else if (error.message?.includes('429')) {
+          console.warn('⏱️ Likely cause: Rate limiting or quota exceeded');
+        } else if (error.message?.includes('404')) {
+          console.warn('🚫 Likely cause: Edge Function not deployed or not found');
+        }
+
+        // Always return fallback instead of throwing
+        console.log('📋 Using offline structured summary instead...');
         return this.generateFallbackSummary(prompt);
       }
 
+      console.log('✅ Gemini API call successful');
       return data?.advice || data?.response || this.generateFallbackSummary(prompt);
     } catch (error) {
-      console.error('Error calling Gemini via Edge Function:', error);
-      // Return fallback instead of throwing
+      console.warn('❌ Unexpected error calling Gemini via Edge Function:', error);
+      console.log('📋 Falling back to offline structured summary...');
+      // Always return fallback instead of throwing
       return this.generateFallbackSummary(prompt);
     }
   }
