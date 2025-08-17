@@ -7,6 +7,7 @@ import { offlineAIService } from './offlineAIService';
 import { geminiValidator, GeminiValidationRequest } from './geminiValidator';
 import { processLanguageQuery } from '@/utils/languageProcessor';
 import { mandiPriceFetcher, RealTimeMandiPriceFetcher } from './realTimeMandiPrices';
+import { demoQuestionHandler } from './demoQuestionHandler';
 
 export interface RAGResponse {
   answer: string;
@@ -359,7 +360,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृप���ा बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृप�����ा बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -469,7 +470,7 @@ export class RetrievalAugmentedGeneration {
     // Generate location-specific suggestions
     if (isHindi) {
       response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा रहेगा?"\n`;
-      response += `• 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
+      response += `��� 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
       response += `• 🐛 "${location} में कपास के लिए कीट चेताव���ी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
       response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
@@ -565,7 +566,7 @@ RESPONSE:`;
     const crop = context.crop?.name || 'general farming';
 
     const instructions = isHindi ?
-      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें���' :
+      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें����' :
       'You are an agricultural expert. Provide advice based on general agricultural knowledge only.';
 
     return `${instructions}
