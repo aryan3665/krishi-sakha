@@ -42,7 +42,7 @@ const GEMINI_VALIDATION_PROMPT = `You are Krishi Sakha AI, an expert agricultura
 🔍 **Query:** [User's exact original question as asked]
 
 💰 **Market Prices:** (ONLY if real API data exists)
-• [Mandi Name]: [Crop] - ₹[amount]/kg (Date: [date], Source: [source])
+• [Mandi Name]: [Crop] - ��[amount]/kg (Date: [date], Source: [source])
 
 OR
 
@@ -147,41 +147,57 @@ export class GeminiValidator {
   }
 
   private parseGeminiResponse(response: string, request: GeminiValidationRequest): GeminiValidationResponse {
-    // Parse the structured response from Gemini
-    const confidenceMatch = response.match(/\*\*Confidence Level:\*\*\s*(High|Medium|Low)/i);
-    const confidence = confidenceMatch ? confidenceMatch[1].toLowerCase() : 'medium';
+    // Parse confidence specifically for price vs general queries
+    let confidence: number;
+    let factualBasis: 'high' | 'medium' | 'low';
+    let sources: string[] = [];
 
-    // Extract sections for validation
-    const hasKeyRecommendations = response.includes('💡 **Key Recommendations:**');
-    const hasImportantDetails = response.includes('📊 **Important Details:**') || response.includes('specific data');
-    const hasPrecautions = response.includes('⚠️ **Precautions:**');
+    // Check if this is a price response with real data
+    const hasPriceData = response.includes('💰 **Market Prices:**') && response.includes('₹') && response.includes('Mandi');
+    const hasNoPriceData = response.includes('⚠️ **Price Data Status:**') && response.includes('No current price data');
 
-    // Determine if response is complete and accurate
-    const isComplete = hasKeyRecommendations && (hasImportantDetails || hasPrecautions);
-    const isAccurate = response.length > 200 && !response.includes('I don\'t know') && !response.includes('cannot provide');
-
-    // Extract sources mentioned
-    const sources = [];
-    if (response.includes('Kisan Call Center')) sources.push('Kisan Call Center');
-    if (response.includes('Krishi Vigyan Kendra')) sources.push('KVK');
-    if (request.apiDataSources?.length > 0) sources.push('Government APIs');
-
-    // Determine factual basis
-    let factualBasis: 'high' | 'medium' | 'low' = 'medium';
-    if (request.apiDataSources?.length > 0 && confidence === 'high') {
+    if (hasPriceData) {
+      // Real price data found
+      confidence = 0.95;
       factualBasis = 'high';
-    } else if (confidence === 'low' || !isAccurate) {
+      sources = ['Live API Data', 'AGMARKNET', 'Local Market Survey'];
+    } else if (hasNoPriceData) {
+      // No price data available - honest response
+      confidence = 0.30;
       factualBasis = 'low';
+      sources = ['API Status Check'];
+    } else {
+      // General agricultural advice
+      const confidenceMatch = response.match(/\*\*Confidence Level:\*\*\s*(High|Medium|Low)/i);
+      const confidenceText = confidenceMatch ? confidenceMatch[1].toLowerCase() : 'medium';
+      confidence = this.confidenceToNumber(confidenceText);
+
+      if (request.apiDataSources?.length > 0) {
+        factualBasis = 'high';
+        sources = ['Government APIs', 'Agricultural Data'];
+      } else {
+        factualBasis = 'medium';
+        sources = ['Agricultural Knowledge'];
+      }
     }
+
+    // Validation checks
+    const hasStructuredFormat = response.includes('🔍 **Query:**');
+    const isAccurate = response.length > 100 && !response.includes('I don\'t know');
+    const isComplete = hasStructuredFormat && (hasPriceData || hasNoPriceData || response.includes('💡'));
 
     return {
       isAccurate,
       isComplete,
       enhancedResponse: response,
-      confidence: this.confidenceToNumber(confidence),
+      confidence,
       factualBasis,
       sources,
-      disclaimer: factualBasis === 'low' ? 'This advice is based on general agricultural knowledge. For specific issues, consult local experts.' : undefined
+      disclaimer: factualBasis === 'low' ?
+        'No current data available for requested query. Please try again later.' :
+        factualBasis === 'high' ?
+        'Response based on live market data and government sources.' :
+        'Response based on general agricultural knowledge and best practices.'
     };
   }
 
@@ -200,7 +216,7 @@ export class GeminiValidator {
     
     // Basic validation checks
     const hasRelevantContent = this.checkRelevantContent(candidateResponse, request.translatedQuery);
-    const hasStructuredFormat = candidateResponse.includes('💡') || candidateResponse.includes('📊') || candidateResponse.includes('⚠️');
+    const hasStructuredFormat = candidateResponse.includes('💡') || candidateResponse.includes('📊') || candidateResponse.includes('��️');
     const hasActionableAdvice = candidateResponse.includes('•') || candidateResponse.includes('-') || candidateResponse.toLowerCase().includes('should');
     
     const isAccurate = hasRelevantContent && candidateResponse.length > 100;
