@@ -82,11 +82,18 @@ export const setupDemoUserNow = async () => {
   }
 };
 
+// Make available globally for console testing
+if (typeof window !== 'undefined') {
+  (window as any).setupDemoUser = setupDemoUserNow;
+}
+
 // Run immediately when this file is imported
 setupDemoUserNow().then(result => {
   if (result.success) {
     console.log('🎉 Demo user setup completed:', result.message);
+    console.log('💡 You can now try signing in with demo@krishisakha.com / demo123456');
   } else {
     console.error('💥 Demo user setup failed:', result.error);
+    console.log('🔧 You can try running setupDemoUser() in the console to retry');
   }
 });
