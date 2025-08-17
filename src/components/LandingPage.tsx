@@ -19,6 +19,7 @@ import { TestimonialsMarquee } from "./TestimonialsMarquee";
 import { AppFunctionalityShowcase } from "./AppFunctionalityShowcase";
 import { WorkflowSteps } from "./WorkflowSteps";
 import { DetailedFooter } from "./DetailedFooter";
+import { ThemeToggle } from "./ThemeToggle";
 import { useState } from "react";
 
 interface LandingPageProps {
