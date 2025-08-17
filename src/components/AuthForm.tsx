@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuthDebugger } from './AuthDebugger';
 import { DemoCredentials } from './DemoCredentials';
 import { DemoUserTest } from './DemoUserTest';
+import { DemoUserSetupButton } from './DemoUserSetupButton';
 import { DEMO_CREDENTIALS, createDemoUserIfNotExists } from '@/utils/demoUserSetup';
 
 interface AuthFormProps {
