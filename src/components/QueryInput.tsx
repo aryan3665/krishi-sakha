@@ -105,12 +105,24 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
               )}
             </Button>
           </div>
+
           <VoiceInput
             language={language}
             onResult={handleVoiceResult}
             onLanguageDetected={onLanguageDetected}
             disabled={isLoading}
           />
+
+          {/* Demo Questions Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDemoQuestions(!showDemoQuestions)}
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="h-4 w-4" />
+            Demo Questions
+          </Button>
         </div>
       </form>
       <div className="text-center space-y-2">
