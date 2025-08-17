@@ -36,10 +36,15 @@ export const LandingPage = ({ onGetStarted, language = "en", onLanguageChange = 
     onLanguageChange(newLanguage);
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-500">
+      {/* Theme Toggle - Fixed Position */}
+      <div className="fixed top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-emerald-600/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-emerald-600/10 dark:from-green-400/5 dark:to-emerald-400/5"></div>
         <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             {/* Logo and Brand */}
