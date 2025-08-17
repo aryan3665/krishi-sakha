@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthDebugger } from './AuthDebugger';
-import { DemoCredentials } from './DemoCredentials';
 
 interface AuthFormProps {
   onBackToLanding: () => void;
