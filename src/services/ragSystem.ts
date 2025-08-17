@@ -6,6 +6,7 @@ import { offlineCache } from './offlineCache';
 import { offlineAIService } from './offlineAIService';
 import { geminiValidator, GeminiValidationRequest } from './geminiValidator';
 import { processLanguageQuery } from '@/utils/languageProcessor';
+import { mandiPriceFetcher, RealTimeMandiPriceFetcher } from './realTimeMandiPrices';
 
 export interface RAGResponse {
   answer: string;
@@ -356,7 +357,7 @@ export class RetrievalAugmentedGeneration {
     // General tips
     formattedAnswer += isHindi ? '💡 **सुझाव:**\n' : '💡 **Tips:**\n';
     formattedAnswer += isHindi ?
-      '• स्थानीय कृषि विशेषज्ञ से सला��� लें\n• मौसम के अनुसार फसल की देखभाल करें\n\n' :
+      '• स्थानीय कृषि विशेषज्ञ से सला�� लें\n• मौसम के अनुसार फसल की देखभाल करें\n\n' :
       '• Consult local agricultural experts\n• Monitor crop conditions regularly\n\n';
 
     // How This Answer Was Generated section
@@ -377,7 +378,7 @@ export class RetrievalAugmentedGeneration {
     if (isHindi) {
       section += `• आपके प्रश्न का विश्लेषण करके विषय और स्थान की पहचान की गई\n`;
       section += `• ${dataSourceCount} विश्वसनीय कृषि स्रोतों से डेटा एकत्र किया गया\n`;
-      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प��राप्त ���ुई\n`;
+      section += `• ${freshDataCount} स्रोतों से ताज़ा जानकारी प��राप्त ��ुई\n`;
       section += `• AI ने इस डेटा को कृषि विशेषज्ञता के साथ जोड़कर उत्तर तैयार किया\n`;
       section += `• वि������वसनीयता स्कोर: ${(response.confidence * 100).toFixed(0)}% (${response.factualBasis === 'high' ? 'उच्च' : response.factualBasis === 'medium' ? 'मध्यम' : 'निम्न'} तथ्यात्मक आधार)\n`;
 
@@ -451,12 +452,12 @@ export class RetrievalAugmentedGeneration {
     if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
       // Case 1: Cannot understand query or system down
       fallbackAdvice += isHindi ?
-        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब में चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं�����ब म���ं कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवाब देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब म��ं चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं���ाब म���ं कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
         '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
     } else {
       // Case 2: General guidance with suggestions
       fallbackAdvice += isHindi ?
-        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के ल��ए पूछें:**\n• "मेरे क्षेत्र का मौसम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
+        '🌾 **कृषि सलाह**\n\n💡 **सामान्य सुझाव:**\n• मिट्टी की जांच कराएं\n• मौसम के अनुसार फसल का चयन करें\n• स्थानीय कृषि केंद्र से संपर्क करें\n• उचित सिंचाई और उर्वरक का उपयोग करें\n\n📝 **अधिक मदद के ल��ए पूछें:**\n• "मेरे क्षेत्र का म���सम कैसा रहेगा?"\n• "बाजार के भाव क्या हैं?"\n• "मिट्टी की जांच कैसे कराएं?"' :
         '🌾 **Agricultural Advisory**\n\n💡 **General Guidance:**\n• Test your soil regularly\n• Choose crops suitable for current season\n• Contact local agricultural extension office\n• Use appropriate irrigation and fertilization\n\n📝 **For more specific help, ask:**\n• "What is the weather forecast for my region?"\n• "Show me current market prices"\n• "How to get soil testing done?"';
     }
 
@@ -547,7 +548,7 @@ RESPONSE:`;
     const isHindi = language === 'hi';
 
     const instructions = isHindi ?
-      'नीचे दिए गए वर्तमान डे���ा के साथ अपनी सलाह क�� अपडे��� करें।' :
+      'नीचे दिए गए वर्तमान डे���ा के साथ अपनी सलाह को अपडे��� करें।' :
       'Update your advice with the current data provided below.';
 
     return `${instructions}
@@ -854,6 +855,58 @@ RESPONSE:`;
       // Fallback to original response with offline enhancement
       return this.formatFarmerFriendlyResponse(candidateResponse, sources, languageResult.detectedLanguage, processedQuery);
     }
+  }
+
+  private formatPriceResponse(priceData: any, originalQuery: string): string {
+    const { prices, requestedCrop, requestedLocation, searchTimestamp } = priceData;
+
+    let response = `🔍 **Query:** ${originalQuery}\n\n`;
+    response += `💰 **Market Prices for ${requestedCrop.charAt(0).toUpperCase() + requestedCrop.slice(1)} in ${requestedLocation.charAt(0).toUpperCase() + requestedLocation.slice(1)}:**\n\n`;
+
+    prices.forEach((price: any) => {
+      const trendEmoji = price.trend === 'rising' ? '📈' : price.trend === 'falling' ? '📉' : '➡️';
+      response += `• **${price.mandi}**: ₹${price.pricePerKg}/kg ${trendEmoji}\n`;
+      response += `  - Variety: ${price.variety}\n`;
+      response += `  - Date: ${price.date}\n`;
+      response += `  - Source: ${price.source}\n\n`;
+    });
+
+    response += `📊 **Market Summary:**\n`;
+    response += `• Total Mandis: ${prices.length}\n`;
+    response += `• Price Range: ₹${Math.min(...prices.map((p: any) => p.pricePerKg))}-${Math.max(...prices.map((p: any) => p.pricePerKg))}/kg\n`;
+    response += `• Data Updated: ${new Date(searchTimestamp).toLocaleString()}\n\n`;
+
+    response += `⚠️ **Note:** Prices may vary throughout the day. Visit mandis directly for final rates.`;
+
+    return response;
+  }
+
+  private formatNoPriceDataResponse(priceData: any, originalQuery: string): string {
+    const { requestedCrop, requestedLocation } = priceData;
+
+    let response = `🔍 **Query:** ${originalQuery}\n\n`;
+    response += `⚠️ **Price Data Status:**\n\n`;
+    response += `• No current price data available for **${requestedCrop}** in **${requestedLocation}** today\n`;
+    response += `• AGMARKNET and eNAM APIs currently unavailable\n`;
+    response += `• Please check again later or visit local mandi for current rates\n\n`;
+    response += `📞 **Alternative Options:**\n`;
+    response += `• Visit nearest APMC mandi directly\n`;
+    response += `• Check local newspaper market rates\n`;
+    response += `• Contact local agricultural extension officer\n\n`;
+    response += `⏰ **Last Checked:** ${new Date().toLocaleString()}`;
+
+    return response;
+  }
+
+  private createPriceSources(priceData: any): SourceReference[] {
+    return priceData.prices.map((price: any) => ({
+      source: price.source,
+      type: 'mandi_price',
+      data: price,
+      confidence: price.confidence,
+      freshness: 'fresh' as const,
+      citation: `${price.mandi}, ${price.date}`
+    }));
   }
 
   private getOfflineLLMResponse(prompt: string): string {
