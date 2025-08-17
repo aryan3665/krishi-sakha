@@ -40,17 +40,19 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
     return allDemoQueries[currentDemo] || "Ask your farming question...";
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, demoQuery?: string) => {
     e.preventDefault();
-    if (query.trim() && !isLoading) {
+    const queryToSubmit = demoQuery || query.trim();
+
+    if (queryToSubmit && !isLoading) {
       // Process language before submitting
-      const langResult = processLanguageQuery(query.trim());
+      const langResult = processLanguageQuery(queryToSubmit);
 
       if (langResult.detectedLanguage !== language && onLanguageDetected) {
         onLanguageDetected(langResult.detectedLanguage);
       }
 
-      onSubmit(query.trim());
+      onSubmit(queryToSubmit);
       setQuery("");
       setDetectedLanguage(null);
       setLanguageConfidence(0);
