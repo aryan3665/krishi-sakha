@@ -7,9 +7,11 @@ const corsHeaders = {
 };
 
 interface GenerateAdviceRequest {
-  cleaned_query_text: string;
+  cleaned_query_text?: string;
   detected_language?: string;
-  language: string;
+  language?: string;
+  prompt?: string; // New format for enhanced queries
+  model?: string;
 }
 
 serve(async (req) => {
@@ -19,11 +21,14 @@ serve(async (req) => {
   }
 
   try {
-    const { cleaned_query_text, detected_language, language }: GenerateAdviceRequest = await req.json();
+    const { cleaned_query_text, detected_language, language, prompt, model }: GenerateAdviceRequest = await req.json();
 
-    if (!cleaned_query_text) {
+    // Support both old format (cleaned_query_text) and new format (prompt)
+    const queryText = prompt || cleaned_query_text;
+
+    if (!queryText) {
       return new Response(
-        JSON.stringify({ error: 'Query text is required' }), 
+        JSON.stringify({ error: 'Query text or prompt is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -37,12 +42,18 @@ serve(async (req) => {
       );
     }
 
-    // Determine response language
-    const responseLanguage = detected_language || language || 'English';
-    const isHindi = responseLanguage.toLowerCase().includes('hindi') || responseLanguage === 'hi';
-    
-    // Create contextual prompt for Indian farmers
-    const systemPrompt = `You are an expert agricultural advisor specializing in Indian farming practices. Provide concise, actionable advice for Indian farmers based on their queries. 
+    // Determine if this is a new format prompt or old format query
+    let systemPrompt: string;
+
+    if (prompt) {
+      // New format: use the prompt directly (it's already formatted)
+      systemPrompt = prompt;
+    } else {
+      // Old format: create contextual prompt for Indian farmers
+      const responseLanguage = detected_language || language || 'English';
+      const isHindi = responseLanguage.toLowerCase().includes('hindi') || responseLanguage === 'hi';
+
+      systemPrompt = `You are an expert agricultural advisor specializing in Indian farming practices. Provide concise, actionable advice for Indian farmers based on their queries.
 
 Guidelines:
 - Give practical, implementable advice suitable for Indian climate and soil conditions
@@ -56,7 +67,8 @@ Format your response as JSON with two fields:
 - "advice": Practical, actionable farming advice
 - "explanation": Brief explanation of why this advice works
 
-User Query: ${cleaned_query_text}`;
+User Query: ${queryText}`;
+    }
 
     console.log('Sending request to Gemini API...');
     
@@ -129,26 +141,33 @@ User Query: ${cleaned_query_text}`;
     const generatedText = data.candidates[0].content.parts[0].text;
     console.log('Generated text:', generatedText);
 
-    // Try to parse JSON response
+    // Handle response based on format
     let advice: string;
     let explanation: string;
 
-    try {
-      const parsed = JSON.parse(generatedText);
-      advice = parsed.advice || generatedText;
-      explanation = parsed.explanation || '';
-    } catch {
-      // If not JSON, treat as plain text advice
-      advice = generatedText;
-      explanation = 'AI-generated farming advice based on your query.';
+    if (prompt) {
+      // New format: return the full response as advice
+      advice = generatedText.trim();
+      explanation = 'Enhanced AI response with real-time data integration.';
+    } else {
+      // Old format: try to parse JSON response
+      try {
+        const parsed = JSON.parse(generatedText);
+        advice = parsed.advice || generatedText;
+        explanation = parsed.explanation || '';
+      } catch {
+        // If not JSON, treat as plain text advice
+        advice = generatedText;
+        explanation = 'AI-generated farming advice based on your query.';
+      }
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         advice: advice.trim(),
         explanation: explanation.trim()
-      }), 
-      { 
+      }),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
       }

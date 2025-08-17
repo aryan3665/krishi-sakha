@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { VoiceInput } from "./VoiceInput";
+import VoiceInput from "./VoiceInput";
+import { processLanguageQuery } from "@/utils/languageProcessor";
 import { Send, Sparkles } from "lucide-react";
 import { getTranslation, getStringTranslation, translations } from "@/utils/translations";
 
@@ -9,12 +10,14 @@ interface QueryInputProps {
   onSubmit: (query: string) => void;
   language: string;
   isLoading?: boolean;
+  onLanguageDetected?: (detectedLang: string) => void;
 }
 
-export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) => {
+export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }: QueryInputProps) => {
   const [query, setQuery] = useState("");
   const [currentDemo, setCurrentDemo] = useState(0);
-  const [isListening, setIsListening] = useState(false);
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
+  const [languageConfidence, setLanguageConfidence] = useState<number>(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,18 +41,39 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim() && !isLoading) {
+      // Process language before submitting
+      const langResult = processLanguageQuery(query.trim());
+
+      if (langResult.detectedLanguage !== language && onLanguageDetected) {
+        onLanguageDetected(langResult.detectedLanguage);
+      }
+
       onSubmit(query.trim());
       setQuery("");
+      setDetectedLanguage(null);
+      setLanguageConfidence(0);
     }
   };
 
   const handleVoiceResult = (transcript: string) => {
     setQuery(transcript);
+
+    // Immediately detect language for the voice input
+    const langResult = processLanguageQuery(transcript);
+    setDetectedLanguage(langResult.detectedLanguage);
+    setLanguageConfidence(langResult.confidence);
+
+    if (onLanguageDetected && langResult.detectedLanguage !== language) {
+      onLanguageDetected(langResult.detectedLanguage);
+    }
+
     // Auto-submit voice queries for better UX
     if (transcript.trim() && !isLoading) {
       setTimeout(() => {
         onSubmit(transcript.trim());
         setQuery("");
+        setDetectedLanguage(null);
+        setLanguageConfidence(0);
       }, 500); // Small delay to show the text before submitting
     }
   };
@@ -80,10 +104,10 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
             </Button>
           </div>
           <VoiceInput
-            onVoiceResult={handleVoiceResult}
             language={language}
-            isListening={isListening}
-            setIsListening={setIsListening}
+            onResult={handleVoiceResult}
+            onLanguageDetected={onLanguageDetected}
+            disabled={isLoading}
           />
         </div>
       </form>
@@ -91,13 +115,11 @@ export const QueryInput = ({ onSubmit, language, isLoading }: QueryInputProps) =
         <p className="text-sm text-muted-foreground px-4 font-medium">
           {getStringTranslation(language, 'askInAnyLanguage')}
         </p>
-        {isListening && (
-          <p className="text-xs text-blue-600 animate-pulse">
-            {language === 'hi' ?
-              '🎤 सुन रहा है... अपना कृषि प्रश्न बोलें' :
-              '🎤 Listening... Speak your farming question'
-            }
-          </p>
+        {detectedLanguage && languageConfidence > 0.6 && (
+          <div className="flex items-center justify-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs text-blue-700">
+            <Sparkles className="h-3 w-3" />
+            <span>Language detected: {detectedLanguage.toUpperCase()} ({(languageConfidence * 100).toFixed(0)}%)</span>
+          </div>
         )}
       </div>
     </div>

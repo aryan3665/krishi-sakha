@@ -13,7 +13,12 @@ interface HistoryItem {
   language: string;
   timestamp: Date;
   source: string;
-  originalQuery?: string; // For showing original vs cleaned query
+  originalQuery?: string;
+  translatedQuery?: string;
+  detectedLanguage?: string;
+  geminiValidated?: boolean;
+  confidence?: number;
+  factualBasis?: 'high' | 'medium' | 'low';
 }
 
 interface QueryHistoryProps {

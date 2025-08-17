@@ -1,6 +1,7 @@
-// Enhanced query preprocessing with agricultural context extraction
+// Enhanced query preprocessing with multilingual agricultural context extraction
 
 import { LocationInfo, CropInfo, QueryContext, INDIAN_STATES, COMMON_CROPS, CROP_TRANSLATIONS } from '../services/dataSources';
+import { processLanguageQuery, translateToEnglish } from './languageProcessor';
 
 export interface ProcessedQuery {
   originalText: string;
@@ -32,8 +33,11 @@ const indianLanguageCodes = ['hin', 'ben', 'tel', 'mar', 'tam', 'guj', 'mal', 'k
 
 export const preprocessQuery = (query: string): ProcessedQuery => {
   const originalText = query;
-  
-  // Step 1: Basic text cleaning
+
+  // Step 1: Enhanced language processing
+  const languageResult = processLanguageQuery(query);
+
+  // Step 2: Basic text cleaning
   let cleanedText = query
     .trim()
     .replace(/\s+/g, ' ') // Replace multiple spaces with single space
@@ -42,52 +46,22 @@ export const preprocessQuery = (query: string): ProcessedQuery => {
     .replace(/(.)\1{3,}/g, '$1$1') // Reduce repeated characters (more than 3) to 2
     .toLowerCase();
 
-  // Step 2: Language detection using simple heuristics
-  let detectedLanguage = 'eng'; // Default to English
-  
-  // Simple language detection based on script patterns
-  if (/[\u0900-\u097F]/.test(cleanedText)) {
-    detectedLanguage = 'hin'; // Hindi/Devanagari
-  } else if (/[\u0980-\u09FF]/.test(cleanedText)) {
-    detectedLanguage = 'ben'; // Bengali
-  } else if (/[\u0A00-\u0A7F]/.test(cleanedText)) {
-    detectedLanguage = 'guj'; // Gujarati
-  } else if (/[\u0B00-\u0B7F]/.test(cleanedText)) {
-    detectedLanguage = 'ori'; // Odia
-  } else if (containsHinglishPattern(cleanedText)) {
-    detectedLanguage = 'hin-rom'; // Hindi in Roman script
-  }
-
-  // Step 3: Handle code-mixed or transliteration
-  if (detectedLanguage === 'eng' && /[\u0900-\u097F]/.test(cleanedText)) {
-    // Contains Devanagari script but detected as English - likely Hindi
-    detectedLanguage = 'hin';
-  }
-
-  // Step 4: Basic transliteration for Hinglish (Roman script Hindi)
-  if (detectedLanguage === 'eng' && containsHinglishPattern(cleanedText)) {
-    try {
-      // Attempt to transliterate common Hindi words written in Roman script
-      cleanedText = transliterateHinglishWords(cleanedText);
-      detectedLanguage = 'hin-rom'; // Hindi in Roman script
-    } catch (error) {
-      console.warn('Transliteration failed:', error);
-    }
-  }
-
-  // Step 5: Agriculture-specific spell corrections
+  // Step 3: Agriculture-specific spell corrections
   cleanedText = correctAgricultureTerms(cleanedText);
 
-  // Step 6: Validation
+  // Step 4: Get translated version for entity extraction
+  const translatedForExtraction = languageResult.translatedQuery || cleanedText;
+
+  // Step 5: Validation
   const isValid = cleanedText.length >= 3 && /[a-zA-Z\u0900-\u097F\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/.test(cleanedText);
 
-  // Step 7: Extract agricultural context
-  const extractedContext = extractQueryContext(cleanedText, detectedLanguage);
+  // Step 6: Extract agricultural context (using both original and translated for better accuracy)
+  const extractedContext = extractQueryContext(translatedForExtraction, languageResult.detectedLanguage, cleanedText);
 
   return {
     originalText,
     cleanedText,
-    detectedLanguage,
+    detectedLanguage: languageResult.detectedLanguage,
     isValid,
     error: !isValid ? 'Please enter a valid farming question (minimum 3 characters with letters)' : undefined,
     extractedContext
@@ -144,21 +118,25 @@ const correctAgricultureTerms = (text: string): string => {
   return corrected;
 };
 
-const extractQueryContext = (text: string, language: string): QueryContext => {
+const extractQueryContext = (text: string, language: string, originalText?: string): QueryContext => {
   const context: QueryContext = {
     queryType: [],
     language,
     timestamp: new Date()
   };
 
-  // Extract location information
-  context.location = extractLocation(text);
+  // Extract location information from both translated and original text
+  context.location = extractLocation(text) || (originalText ? extractLocation(originalText) : undefined);
 
-  // Extract crop information
-  context.crop = extractCrop(text);
+  // Extract crop information from both translated and original text
+  context.crop = extractCrop(text) || (originalText ? extractCrop(originalText) : undefined);
 
-  // Classify query type
-  context.queryType = classifyQuery(text);
+  // Classify query type using both texts for better accuracy
+  const queryTypes = classifyQuery(text);
+  const originalQueryTypes = originalText ? classifyQuery(originalText) : [];
+
+  // Combine and deduplicate query types
+  context.queryType = Array.from(new Set([...queryTypes, ...originalQueryTypes]));
 
   return context;
 };
@@ -208,9 +186,26 @@ const extractCrop = (text: string): CropInfo | undefined => {
   const words = text.toLowerCase().split(/\s+/);
   const originalText = text;
 
-  // First check for Hindi crop names
-  for (const [hindiName, englishName] of Object.entries(CROP_TRANSLATIONS)) {
-    if (text.includes(hindiName) || words.some(word => word.includes(hindiName.toLowerCase()))) {
+  // Enhanced multilingual crop detection
+  const allCropMappings = {
+    ...CROP_TRANSLATIONS,
+    // Additional crop names in multiple languages
+    'धान': 'rice',
+    'चावल': 'rice',
+    'ভাত': 'rice',
+    'அரிசி': 'rice',
+    'బియ్యం': 'rice',
+    'ধান': 'rice',
+    'कृषि': 'agriculture',
+    'खेत': 'farm',
+    'ক্ষেত': 'farm',
+    'வயல்': 'farm',
+    'పొలం': 'farm'
+  };
+
+  // First check for multilingual crop names
+  for (const [localName, englishName] of Object.entries(allCropMappings)) {
+    if (text.includes(localName) || words.some(word => word.includes(localName.toLowerCase()))) {
       return createCropInfo(englishName, originalText);
     }
   }

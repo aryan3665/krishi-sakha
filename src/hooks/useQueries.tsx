@@ -4,12 +4,14 @@ import { useAuth } from './useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { preprocessQuery } from '@/utils/queryPreprocessor';
 import { ragSystem, RAGResponse } from '@/services/ragSystem';
+import { processLanguageQuery } from '@/utils/languageProcessor';
 
 export interface Query {
   id: string;
   user_id: string;
   query_text: string;
   original_query_text: string | null;
+  translated_query_text: string | null;
   detected_language: string | null;
   language: string;
   advice: string;
@@ -18,6 +20,7 @@ export interface Query {
   sources?: any[];
   confidence?: number;
   factual_basis?: 'high' | 'medium' | 'low';
+  gemini_validated?: boolean;
 }
 
 export const useQueries = () => {
@@ -77,29 +80,37 @@ export const useQueries = () => {
 
   const submitQuery = async (queryText: string, language: string) => {
     if (!user) return;
-    
+
     setLoading(true);
 
-    // STEP 1: ALWAYS generate the AI response first (never block this)
-    const ragResponse = await generateAdviceWithRAG(queryText, language);
+    // STEP 1: Enhanced Language Processing
+    console.log('🗣️ Processing language for query:', queryText);
+    const languageResult = processLanguageQuery(queryText);
 
-    // STEP 2: Process the query for storage
+    console.log(`📝 Language Detection: ${languageResult.detectedLanguage} (${(languageResult.confidence * 100).toFixed(0)}% confidence)`);
+
+    // STEP 2: ALWAYS generate the AI response first (using processed language data)
+    const ragResponse = await generateAdviceWithRAG(languageResult.translatedQuery || queryText, languageResult.detectedLanguage || language);
+
+    // STEP 3: Process the original query for additional context
     const processed = preprocessQuery(queryText);
 
-    // STEP 3: Create response object
+    // STEP 4: Create comprehensive response object with language processing data
     const responseData = {
       id: `temp_${Date.now()}`,
       user_id: user.id,
       query_text: processed.cleanedText || queryText,
-      original_query_text: processed.originalText || queryText,
-      detected_language: processed.detectedLanguage || language,
+      original_query_text: languageResult.originalQuery,
+      translated_query_text: languageResult.isTranslationRequired ? languageResult.translatedQuery : null,
+      detected_language: languageResult.detectedLanguage,
       language,
       advice: ragResponse.answer,
       explanation: ragResponse.disclaimer || `🌾 AI-generated advice with ${ragResponse.factualBasis} factual basis (${(ragResponse.confidence * 100).toFixed(0)}% confidence)`,
       created_at: new Date().toISOString(),
       sources: ragResponse.sources,
       confidence: ragResponse.confidence,
-      factual_basis: ragResponse.factualBasis
+      factual_basis: ragResponse.factualBasis,
+      gemini_validated: true
     };
 
     // STEP 4: Try to save to database with retries (but never block the response)
@@ -114,8 +125,9 @@ export const useQueries = () => {
           .insert([{
             user_id: user.id,
             query_text: processed.cleanedText || queryText,
-            original_query_text: processed.originalText || queryText,
-            detected_language: processed.detectedLanguage || language,
+            original_query_text: languageResult.originalQuery,
+            translated_query_text: languageResult.isTranslationRequired ? languageResult.translatedQuery : null,
+            detected_language: languageResult.detectedLanguage,
             language,
             advice: ragResponse.answer,
             explanation: responseData.explanation
