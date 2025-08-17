@@ -19,6 +19,7 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
   const [currentDemo, setCurrentDemo] = useState(0);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const [languageConfidence, setLanguageConfidence] = useState<number>(0);
+  const [showDemoQuestions, setShowDemoQuestions] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
