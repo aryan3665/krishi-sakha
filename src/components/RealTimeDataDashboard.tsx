@@ -464,5 +464,3 @@ export const RealTimeDataDashboard = () => {
     </div>
   );
 };
-
-export { RealTimeDataDashboard };
