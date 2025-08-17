@@ -76,6 +76,34 @@ export const DEMO_QUESTIONS: DemoQuestion[] = [
     language: 'hi',
     category: 'government',
     confidence: 0.95
+  },
+
+  // New demo questions requested by user
+  {
+    patterns: [
+      'अगले 5 दिनों में भोपाल का मौसम कैसा रहेगा',
+      'भ��पाल में अगले 5 दिन का मौसम',
+      'भोपाल 5 दिन मौसम पूर्वानुमान',
+      'भोपाल अगले 5 दिन का मौसम कैसा रहेगा',
+      'भोपाल मौसम अगले 5 दिनों में'
+    ],
+    answer: 'भोपाल में अगले 5 दिनों तक हल्की बारिश की संभावना (30–40%), अधिकतम तापमान 32°C और न्यूनतम तापमान 24°C रहने का अनुमान है।',
+    language: 'hi',
+    category: 'weather',
+    confidence: 0.95
+  },
+  {
+    patterns: [
+      'how can i check if my soil is healthy for wheat cultivation',
+      'wheat soil health check',
+      'soil test for wheat cultivation',
+      'check soil health wheat farming',
+      'soil testing for wheat crop'
+    ],
+    answer: 'By doing a soil test at the nearest Krishi Vigyan Kendra (KVK). It will show nutrient levels and recommend fertilizers.',
+    language: 'en',
+    category: 'farming',
+    confidence: 0.95
   }
 ];
 

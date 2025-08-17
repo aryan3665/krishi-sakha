@@ -104,6 +104,34 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
     }
   };
 
+  // Transform Query[] to HistoryItem[] for QueryHistory component
+  const transformQueriesToHistory = (queries: any[]) => {
+    return queries.map(query => ({
+      id: query.id,
+      query: query.query_text,
+      advice: query.advice,
+      language: query.language,
+      timestamp: new Date(query.created_at),
+      source: "Krishi Sakha AI",
+      originalQuery: query.original_query_text,
+      translatedQuery: query.translated_query_text,
+      detectedLanguage: query.detected_language,
+      geminiValidated: query.gemini_validated,
+      confidence: query.confidence,
+      factualBasis: query.factual_basis
+    }));
+  };
+
+  // Handle selecting query from history
+  const handleSelectQuery = (query: string) => {
+    generateAdvice(query);
+    setActiveTab("home"); // Switch to home tab to show the result
+    toast({
+      title: "Query selected",
+      description: "Generating advice for selected query...",
+    });
+  };
+
   const sidebarItems = [
     { id: "home", label: "Dashboard", icon: Home },
     { id: "realtime", label: "Real-Time Data", icon: BarChart3 },
@@ -274,7 +302,11 @@ export const Dashboard = ({ language, onLanguageChange }: DashboardProps) => {
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Query History</h2>
             <Suspense fallback={<div className="animate-pulse bg-gray-200 h-48 rounded-lg"></div>}>
-              <QueryHistory />
+              <QueryHistory
+                history={transformQueriesToHistory(queries)}
+                onSelectQuery={handleSelectQuery}
+                language={language}
+              />
             </Suspense>
           </div>
         );

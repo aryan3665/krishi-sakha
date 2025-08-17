@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthDebugger } from './AuthDebugger';
-import { DemoCredentials } from './DemoCredentials';
 
 interface AuthFormProps {
   onBackToLanding: () => void;
@@ -278,13 +277,6 @@ export const AuthForm = ({ onBackToLanding }: AuthFormProps) => {
                   
                   <TabsContent value="signin" className="space-y-4">
                     {/* Demo Credentials */}
-                    <DemoCredentials
-                      onCredentialsFill={(demoEmail, demoPassword) => {
-                        setEmail(demoEmail);
-                        setPassword(demoPassword);
-                      }}
-                    />
-
                     <form onSubmit={handleSignIn} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="signin-email">Email</Label>
