@@ -136,6 +136,20 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
           </div>
         )}
       </div>
+
+      {/* Demo Questions Showcase */}
+      {showDemoQuestions && (
+        <div className="mt-6">
+          <DemoQuestionsShowcase
+            onQuestionSelect={(selectedQuery) => {
+              setQuery(selectedQuery);
+              setShowDemoQuestions(false);
+              // Automatically submit the demo question
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, selectedQuery);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
