@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ApiStatusChecker } from './ApiStatusChecker';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -124,7 +125,11 @@ export const AuthDebugger = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <div className="space-y-6">
+      {/* API Status Checker */}
+      <ApiStatusChecker />
+
+      <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
@@ -257,5 +262,6 @@ export const AuthDebugger = () => {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };

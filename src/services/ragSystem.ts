@@ -7,6 +7,7 @@ import { offlineAIService } from './offlineAIService';
 import { geminiValidator, GeminiValidationRequest } from './geminiValidator';
 import { processLanguageQuery } from '@/utils/languageProcessor';
 import { mandiPriceFetcher, RealTimeMandiPriceFetcher } from './realTimeMandiPrices';
+import { demoQuestionHandler } from './demoQuestionHandler';
 
 export interface RAGResponse {
   answer: string;
@@ -36,10 +37,32 @@ export class RetrievalAugmentedGeneration {
   };
 
   async generateAdvice(query: string, language: string): Promise<RAGResponse> {
-    // Step 0: System Health Check
+    // Step 0: Demo Question Check (Priority)
+    console.log('🎯 Checking for demo questions...');
+    const demoResponse = demoQuestionHandler.getDemoResponse(query);
+    if (demoResponse) {
+      console.log(`✅ Demo question matched with ${(demoResponse.confidence * 100).toFixed(0)}% confidence`);
+      return {
+        answer: demoResponse.answer,
+        sources: [{
+          source: 'Demo Knowledge Base',
+          type: 'predefined',
+          data: { category: demoResponse.category, language: demoResponse.language },
+          confidence: demoResponse.confidence,
+          freshness: 'fresh' as const,
+          citation: `Demo response for ${demoResponse.category} query`
+        }],
+        confidence: demoResponse.confidence,
+        factualBasis: 'high' as const,
+        generatedContent: [demoResponse.answer],
+        disclaimer: 'This is a demo response with predefined agricultural information.'
+      };
+    }
+
+    // Step 1: System Health Check
     await this.checkSystemHealth();
 
-    // Step 1: Enhanced Language Processing
+    // Step 2: Enhanced Language Processing
     const languageResult = processLanguageQuery(query);
     console.log(`🗣️ Language processing: ${languageResult.detectedLanguage} (${(languageResult.confidence * 100).toFixed(0)}% confidence)`);
 
@@ -359,7 +382,7 @@ export class RetrievalAugmentedGeneration {
     } else {
       // Even if no market data retrieved, show section with missing data note
       formattedAnswer += isHindi ?
-        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृपया बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
+        '⚠️ बाजार डेटा अभी उपलब्ध नहीं है। कृप�����ा बाद म���ं पुनः प्रयास करें या स्थानीय मंडी स्रोत���ं से संप��्क करें।\n\n' :
         '⚠️ Market data is currently unavailable. Please check back later or consult local mandi sources.\n\n';
     }
 
@@ -469,7 +492,7 @@ export class RetrievalAugmentedGeneration {
     // Generate location-specific suggestions
     if (isHindi) {
       response += `• 🌦 "${location} में अगले 5 दिन का मौसम कैसा रहेगा?"\n`;
-      response += `• 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
+      response += `��� 💰 "${location} में गेहूं और चावल के मंडी भाव दिखाएं"\n`;
       response += `• 🐛 "${location} में कपास के लिए कीट चेताव���ी"\n`;
       response += `• 📜 "${location} के किसानों के लिए सरकारी योजनाएं"\n`;
       response += `• 🌱 "मिट्टी की जांच कैसे कराएं ${location} में?"\n`;
@@ -495,7 +518,7 @@ export class RetrievalAugmentedGeneration {
     if (reason === 'Invalid query format' || reason === 'System temporarily unavailable') {
       // Case 1: Cannot understand query or system down
       fallbackAdvice += isHindi ?
-        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवा��� देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब म��ं चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं���ाब म���ं कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
+        '❓ **खुशी है कि आपने पूछा**\n\nमुझे खुशी है कि आपने सवाल पूछा, लेकिन मेरे पास इस सवाल का जवा��� देने के लिए पर्याप्त विश्वसनीय डेटा नहीं है।\n\n📝 **आप ये सवाल पूछ सकते हैं:**\n• "पंजाब में अगले 5 दिन का मौसम कैसा रहेगा?"\n• "पंजाब म��ं चावल/गेहूं/मक्का के भाव दिखाएं"\n• "पं����ाब म���ं कपास के लिए कीट चेतावनी"\n• "पंजाब के किसानों के लिए सरकारी योजनाएं"' :
         '❓ **Query Could Not Be Fully Answered**\n\nI\'m sorry, I do not have sufficient live data to answer your request.\n\n**You can try asking:**\n• 🌦 "Weather forecast for Punjab"\n• 💰 "Wheat and rice mandi prices in Punjab"\n• 🐛 "Pest alerts for cotton in Punjab"\n• 📜 "Government schemes for farmers in Punjab"';
     } else {
       // Case 2: General guidance with suggestions
@@ -565,7 +588,7 @@ RESPONSE:`;
     const crop = context.crop?.name || 'general farming';
 
     const instructions = isHindi ?
-      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें���' :
+      'आप एक कृषि विशेषज्ञ हैं। केवल सामान्य कृषि ज्ञान के आधार पर सलाह दें����' :
       'You are an agricultural expert. Provide advice based on general agricultural knowledge only.';
 
     return `${instructions}
@@ -852,7 +875,14 @@ RESPONSE:`;
       });
 
       if (error) {
-        console.warn('LLM call error, falling back to offline AI:', error);
+        console.warn('⚠️ LLM service unavailable, using offline AI:', error.message || error);
+
+        // Log specific error guidance
+        if (error.message?.includes('500')) {
+          console.warn('🔑 Configuration needed: GEMINI_API_KEY not set in Edge Functions');
+        }
+
+        console.log('🤖 Using offline AI service instead...');
         return this.getOfflineLLMResponse(prompt);
       }
 

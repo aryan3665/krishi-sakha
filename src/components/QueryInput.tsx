@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import VoiceInput from "./VoiceInput";
+import { DemoQuestionsShowcase } from "./DemoQuestionsShowcase";
 import { processLanguageQuery } from "@/utils/languageProcessor";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, HelpCircle } from "lucide-react";
 import { getTranslation, getStringTranslation, translations } from "@/utils/translations";
 
 interface QueryInputProps {
@@ -18,6 +19,7 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
   const [currentDemo, setCurrentDemo] = useState(0);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const [languageConfidence, setLanguageConfidence] = useState<number>(0);
+  const [showDemoQuestions, setShowDemoQuestions] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,17 +40,19 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
     return allDemoQueries[currentDemo] || "Ask your farming question...";
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent, demoQuery?: string) => {
     e.preventDefault();
-    if (query.trim() && !isLoading) {
+    const queryToSubmit = demoQuery || query.trim();
+
+    if (queryToSubmit && !isLoading) {
       // Process language before submitting
-      const langResult = processLanguageQuery(query.trim());
+      const langResult = processLanguageQuery(queryToSubmit);
 
       if (langResult.detectedLanguage !== language && onLanguageDetected) {
         onLanguageDetected(langResult.detectedLanguage);
       }
 
-      onSubmit(query.trim());
+      onSubmit(queryToSubmit);
       setQuery("");
       setDetectedLanguage(null);
       setLanguageConfidence(0);
@@ -103,12 +107,24 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
               )}
             </Button>
           </div>
+
           <VoiceInput
             language={language}
             onResult={handleVoiceResult}
             onLanguageDetected={onLanguageDetected}
             disabled={isLoading}
           />
+
+          {/* Demo Questions Toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDemoQuestions(!showDemoQuestions)}
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="h-4 w-4" />
+            Demo Questions
+          </Button>
         </div>
       </form>
       <div className="text-center space-y-2">
@@ -122,6 +138,20 @@ export const QueryInput = ({ onSubmit, language, isLoading, onLanguageDetected }
           </div>
         )}
       </div>
+
+      {/* Demo Questions Showcase */}
+      {showDemoQuestions && (
+        <div className="mt-6">
+          <DemoQuestionsShowcase
+            onQuestionSelect={(selectedQuery) => {
+              setQuery(selectedQuery);
+              setShowDemoQuestions(false);
+              // Automatically submit the demo question
+              handleSubmit({ preventDefault: () => {} } as React.FormEvent, selectedQuery);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

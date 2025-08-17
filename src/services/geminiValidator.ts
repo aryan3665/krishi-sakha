@@ -128,7 +128,14 @@ export class GeminiValidator {
       });
 
       if (error) {
-        console.error('Gemini API error:', error);
+        console.warn('⚠️ Gemini validation service unavailable:', error.message || error);
+
+        // Log specific error guidance
+        if (error.message?.includes('500')) {
+          console.warn('🔑 Configuration needed: GEMINI_API_KEY not set in Edge Functions');
+        }
+
+        console.log('📋 Validation will be skipped - proceeding with offline response');
         return null;
       }
 

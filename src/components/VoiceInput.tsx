@@ -46,7 +46,7 @@ export const VoiceInput = ({
     };
   }, []);
 
-  const startListening = () => {
+  const startListening = async () => {
     if (!isSupported) {
       const errorMsg = getStringTranslation(language, 'voiceNotSupported');
       toast({
@@ -62,6 +62,33 @@ export const VoiceInput = ({
       return;
     }
 
+    // Check microphone permission first
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (permissionError: any) {
+      let errorMessage = 'Microphone access denied';
+      let description = 'Please enable microphone permissions in your browser settings';
+
+      if (permissionError.name === 'NotFoundError') {
+        errorMessage = 'No microphone found';
+        description = 'Please check your audio setup and try again';
+      } else if (permissionError.name === 'NotAllowedError') {
+        errorMessage = 'Microphone permission denied';
+        description = 'Click the 🔒 icon in your address bar to enable microphone access';
+      } else if (permissionError.name === 'NotSupportedError') {
+        errorMessage = 'Microphone not supported';
+        description = 'Your browser or device doesn\'t support microphone access';
+      }
+
+      setError(errorMessage);
+      toast({
+        title: "🎤 " + errorMessage,
+        description: description,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setError(null);
     setTranscript('');
     setConfidence(0);
@@ -73,10 +100,10 @@ export const VoiceInput = ({
         console.log('🎤 Voice recognition result:', result);
         setTranscript(result);
         setIsListening(false);
-        
+
         // Call the result handler
         onResult(result);
-        
+
         // Show success toast
         toast({
           title: "🎤 Voice Input Successful",
@@ -87,8 +114,18 @@ export const VoiceInput = ({
         console.error('🎤 Voice recognition error:', error);
         setError(error);
         setIsListening(false);
-        
-        const errorMessage = getSTTErrorMessage(language, error);
+
+        let errorMessage = getSTTErrorMessage(language, error);
+
+        // Provide more specific guidance for common errors
+        if (error.includes('no-speech')) {
+          errorMessage = 'No speech detected. Please speak clearly into your microphone and try again.';
+        } else if (error.includes('audio-capture')) {
+          errorMessage = 'Microphone error. Please check your audio setup.';
+        } else if (error.includes('not-allowed')) {
+          errorMessage = 'Microphone access denied. Please enable permissions and try again.';
+        }
+
         toast({
           title: "🎤 Voice Input Error",
           description: errorMessage,
@@ -105,7 +142,12 @@ export const VoiceInput = ({
       recognitionRef.current = recognition;
     } else {
       setIsListening(false);
-      setError('Failed to start voice recognition');
+      setError('Failed to start voice recognition. Please check your browser settings.');
+      toast({
+        title: "🎤 Voice Recognition Failed",
+        description: "Unable to start voice recognition. Try using Chrome or Safari for better compatibility.",
+        variant: "destructive",
+      });
     }
   };
 

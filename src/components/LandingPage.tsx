@@ -19,6 +19,7 @@ import { TestimonialsMarquee } from "./TestimonialsMarquee";
 import { AppFunctionalityShowcase } from "./AppFunctionalityShowcase";
 import { WorkflowSteps } from "./WorkflowSteps";
 import { DetailedFooter } from "./DetailedFooter";
+import { ThemeToggle } from "./ThemeToggle";
 import { useState } from "react";
 
 interface LandingPageProps {
@@ -35,10 +36,15 @@ export const LandingPage = ({ onGetStarted, language = "en", onLanguageChange = 
     onLanguageChange(newLanguage);
   };
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-500">
+      {/* Theme Toggle - Fixed Position */}
+      <div className="fixed top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-emerald-600/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-emerald-600/10 dark:from-green-400/5 dark:to-emerald-400/5"></div>
         <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
           <div className="text-center space-y-8">
             {/* Logo and Brand */}
@@ -122,73 +128,73 @@ export const LandingPage = ({ onGetStarted, language = "en", onLanguageChange = 
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature Cards */}
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:scale-105">
               <CardContent className="p-6 text-center">
                 <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <TrendingUp className="h-8 w-8 text-green-600" />
                 </div>
-                <h4 className="text-xl font-semibold mb-3">Live Market Prices</h4>
-                <p className="text-gray-600">
+                <h4 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100 transition-colors duration-300">Live Market Prices</h4>
+                <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                   Get real-time mandi prices from AGMARKNET, eNAM, and NCDEX for informed selling decisions.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:scale-105">
               <CardContent className="p-6 text-center">
                 <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Cloud className="h-8 w-8 text-blue-600" />
                 </div>
-                <h4 className="text-xl font-semibold mb-3">Weather Insights</h4>
-                <p className="text-gray-600">
+                <h4 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100 transition-colors duration-300">Weather Insights</h4>
+                <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                   Access IMD weather data and forecasts to plan your farming activities and protect your crops.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:scale-105">
               <CardContent className="p-6 text-center">
                 <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="h-8 w-8 text-yellow-600" />
                 </div>
-                <h4 className="text-xl font-semibold mb-3">Pest & Disease Control</h4>
-                <p className="text-gray-600">
+                <h4 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100 transition-colors duration-300">Pest & Disease Control</h4>
+                <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                   Get expert advice on pest management and disease prevention with government-backed solutions.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:scale-105">
               <CardContent className="p-6 text-center">
                 <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <MessageSquare className="h-8 w-8 text-purple-600" />
                 </div>
-                <h4 className="text-xl font-semibold mb-3">Voice & Text Queries</h4>
-                <p className="text-gray-600">
+                <h4 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100 transition-colors duration-300">Voice & Text Queries</h4>
+                <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                   Ask questions in your local language using voice or text - get instant, personalized responses.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:scale-105">
               <CardContent className="p-6 text-center">
                 <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <BarChart3 className="h-8 w-8 text-orange-600" />
                 </div>
-                <h4 className="text-xl font-semibold mb-3">Government Schemes</h4>
-                <p className="text-gray-600">
+                <h4 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100 transition-colors duration-300">Government Schemes</h4>
+                <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                   Stay updated with the latest agricultural schemes, subsidies, and support programs.
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:scale-105">
               <CardContent className="p-6 text-center">
                 <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Smartphone className="h-8 w-8 text-red-600" />
                 </div>
-                <h4 className="text-xl font-semibold mb-3">Mobile Optimized</h4>
-                <p className="text-gray-600">
+                <h4 className="text-xl font-semibold mb-3 text-gray-900 dark:text-gray-100 transition-colors duration-300">Mobile Optimized</h4>
+                <p className="text-gray-600 dark:text-gray-300 transition-colors duration-300">
                   Access all features on your smartphone with a fast, responsive interface designed for farmers.
                 </p>
               </CardContent>
