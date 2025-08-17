@@ -68,11 +68,48 @@ export const AuthForm = ({ onBackToLanding }: AuthFormProps) => {
 
       if (error) {
         console.error('Sign in error:', error);
-        toast({
-          title: "Sign in failed",
-          description: error.message || "Failed to sign in. Please check your credentials.",
-          variant: "destructive",
-        });
+
+        // Check if this is the demo user and the error is "Invalid login credentials"
+        const isDemoUser = email === DEMO_CREDENTIALS.email && password === DEMO_CREDENTIALS.password;
+        const isInvalidCredentialsError = error.message?.includes('Invalid login credentials');
+
+        if (isDemoUser && isInvalidCredentialsError) {
+          toast({
+            title: "🔄 Creating Demo User",
+            description: "Demo user not found. Creating it now...",
+          });
+
+          try {
+            // Attempt to create demo user
+            const createResult = await createDemoUserIfNotExists();
+
+            if (createResult.success) {
+              toast({
+                title: "✅ Demo User Created",
+                description: "Demo user created successfully. Please try signing in again.",
+              });
+            } else {
+              toast({
+                title: "❌ Demo User Creation Failed",
+                description: "Could not create demo user. Please contact support.",
+                variant: "destructive",
+              });
+            }
+          } catch (createError) {
+            console.error('Demo user creation error:', createError);
+            toast({
+              title: "❌ Demo Setup Error",
+              description: "Failed to set up demo user. Please try again or contact support.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Sign in failed",
+            description: error.message || "Failed to sign in. Please check your credentials.",
+            variant: "destructive",
+          });
+        }
       } else {
         toast({
           title: "Success",
